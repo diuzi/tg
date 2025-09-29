@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="ru-RU" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="no-referrer">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV News</title>
+    <!-- 图标库 Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 优化字体: Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 主题颜色变量 --- */
+:root, html[data-theme="dark"] {
+    --brand-cyan: #00FFFF; /* 定义固定的青色 */
+    --bg-main: #0d1117;
+    --card-bg: #161b22;
+    --card-border: #30363d;
+    --text-primary: #c9d1d9;
+    --text-secondary: #8b949e;
+    --text-accent: #58a6ff;
+    --accent-color: #00FFFF;
+    --button-bg: #21262d;
+    --indicator-active: #00FFFF; /* 将活动指示点默认也改为青色 */
+    --indicator-inactive: #30363d;
+    --stats-bg: rgba(33, 38, 45, 0.5);
+    --nav-bg: rgba(33, 38, 45, 0.9);
+    --nav-hover-bg: var(--accent-color);
+    --nav-hover-color: var(--bg-main);
+}
+
+html[data-theme="light"] {
+    --bg-main: #ffffff;
+    --card-bg: #fdfdfd;
+    --card-border: #e1e4e8;
+    --text-primary: #24292e;
+    --text-secondary: #586069;
+    --text-accent: #0366d6;
+    --accent-color: #007BFF;
+    --button-bg: #f6f8fa;
+    --indicator-active: #007BFF;
+    --indicator-inactive: #d1d5da;
+    --stats-bg: rgba(246, 248, 250, 0.8);
+    --nav-bg: rgba(255, 255, 255, 0.8);
+    --nav-hover-bg: var(--accent-color);
+    --nav-hover-color: #ffffff;
+}
+
+html[data-theme="gray"] {
+    --bg-main: #f0f2f5;
+    --card-bg: #ffffff;
+    --card-border: #d9d9d9;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-accent: #0056b3;
+    --accent-color: #006ae0;
+    --button-bg: #e9ecef;
+    --indicator-active: #0056b3;
+    --indicator-inactive: #b0b0b0;
+    --stats-bg: rgba(233, 236, 239, 0.8);
+    --nav-bg: rgba(233, 236, 239, 0.9);
+    --nav-hover-bg: var(--accent-color);
+    --nav-hover-color: #ffffff;
+}
+
+
+/* --- 浮动控制面板样式 --- */
+.top-controls {
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative; /* 默认相对定位 */
+    z-index: 1000;
+    transition: all 0.3s ease-in-out;
+}
+
+/* 滚动时应用的粘性定位样式 */
+.top-controls.sticky {
+    position: fixed; /* 固定在视口顶部 */
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--nav-bg); /* 带透明度的背景 */
+    backdrop-filter: blur(5px); /* 毛玻璃效果 */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 8px 15px;
+}
+
+.theme-selector select, .language-selector select {
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--card-border);
+    background: var(--button-bg);
+    color: var(--text-accent);
+    font-weight: 500;
+    cursor: pointer;
+    outline: none;
+    font-size: 0.9rem;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+/* -------------------------------------------------- */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* 优化：添加 Inter 字体，并保留系统字体作为备用 */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+                 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    line-height: 1.5;
+    padding: 0 15px 15px;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 100vh;
+    font-size: 15px;
+    position: relative;
+    transition: background 0.3s, color 0.3s;
+}
+
+.header-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 0; /* [修改] 移除它自己的下边距，不再推开下面的元素 */
+    margin-top: 15px;
+}
+
+.header-container h2 { font-size: 1.3rem; font-weight: 700; color: var(--accent-color); }
+.highlights h2, .news-title { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+.highlight-item { font-size: 0.95rem; font-weight: 500; }
+
+.news-content {
+    font-size: 0.9rem;
+    font-weight: 400;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    background: var(--card-bg);
+    padding: 15px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    /* [修改] 使用 overflow-wrap 作为备用方案，并开启自动连字符 */
+    overflow-wrap: break-word;
+    word-wrap: break-word; /* 兼容旧版浏览器 */
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+    word-break: normal; /* [修改] 恢复到 normal，让 hyphens 生效 */
+}
+footer { font-size: 0.75rem; font-weight: 400; color: var(--text-secondary); }
+<!--.header-logo {-->
+<!--width: 100%; /* 宽度占满容器 */-->
+<!--max-width: 450px; /* 在大屏幕上限制最大宽度，防止过大 */-->
+<!--height: auto; /* 高度自动调整，保持长宽比不变 */-->
+<!--margin-bottom: 15px; /* 增加与下方内容的间距 */-->
+<!--}-->
+<!--.header-logo path { transition: fill 0.3s; }-->
+.header-logo {
+    width: 100%;
+    max-width: 450px;
+    height: auto;
+    display: block;
+    margin-bottom: 15px;
+    margin-left: auto;
+    margin-right: auto;
+}
+header { margin: 20px 0; padding-bottom: 15px; border-bottom: 2px solid var(--accent-color); position: relative; }
+h1 { color: var(--accent-color); font-size: 2.2rem; margin-bottom: 8px; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1); position: relative; display: inline-block; padding: 0 15px; }
+h1:after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 80px; height: 3px; background: var(--accent-color); border-radius: 2px; }
+
+.stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    /* [修改] 大幅减少上边距，让它紧随Logo；保持合理的下边距 */
+    margin: 15px 0 25px 0;
+    font-size: 0.8rem;
+}
+
+.meta-info {
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: center; /* 居中对齐 */
+    padding: 4px 0;          /* 调整垂直内边距，使其更紧凑 */
+    margin: 0 0 10px 0;      /* 调整外边距，主要保留下方间距 */
+    background: none;        /* 去掉背景 */
+    border: none;            /* 去掉边框 */
+    box-shadow: none;        /* 去掉阴影 */
+}
+
+.stat-item { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+.category { font-weight: bold; background: var(--button-bg); padding: 4px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; color: var(--text-accent); border: 1px solid var(--card-border); }
+.date { display: flex; align-items: center; gap: 6px; font-weight: 400; color: var(--text-secondary); }
+.date i {
+    color: var(--brand-cyan); /* 使用品牌青色 */
+    font-size: 1em;
+}
+.highlights {
+    /* ...前面的 background, border-radius, padding, animation 等保持不变... */
+    background: linear-gradient(145deg, #1c222c, #161b22);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    border: none;
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.2), 0 0 20px rgba(0, 255, 255, 0.15);
+    animation: pulse-glow 2.8s infinite ease-in-out;
+    transition: all 0.3s ease-in-out;
+
+    /* [核心修改] 将下外边距增加到 80px，为分割线创造巨大的呼吸空间 */
+    margin-bottom: 80px;
+}
+html[data-theme="light"] .highlights {
+    background: linear-gradient(145deg, #fdfdfd, #f9f9f9);
+}
+html[data-theme="gray"] .highlights {
+    background: linear-gradient(145deg, #ffffff, #f7f7f7);
+}
+@keyframes pulse-glow {
+    /* "静止"状态：辉光很弱 */
+    0%, 100% {
+        box-shadow: 0 0 12px rgba(0, 255, 255, 0.2), 0 0 20px rgba(0, 255, 255, 0.15);
+    }
+    /* "脉冲"顶峰：辉光非常强烈和宽广 */
+    50% {
+        /* [修改] 大幅增强了透明度、模糊和扩散范围，视觉冲击力更强 */
+        box-shadow: 0 0 25px rgba(0, 255, 255, 0.7), 0 0 50px 4px rgba(0, 255, 255, 0.5);
+    }
+}
+.highlights::after {
+    content: '';
+    position: absolute;
+    /* [核心修改] 将 bottom 设为 -40px，使其正好位于 80px 外边距的正中间 */
+    bottom: -40px;
+    left: 10%;
+    right: 10%;
+    width: 80%;
+    height: 2px;
+    background: linear-gradient(to right,
+        transparent,
+        rgba(0, 255, 255, 0.6),
+        transparent
+    );
+    opacity: 0.8;
+}
+.highlights h2 {
+    color: var(--brand-cyan);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: center; /* 使标题和图标整体居中 */
+    gap: 8px;
+}
+.highlights h2 i {
+    color: var(--brand-cyan); /* 固定图标颜色 */
+}
+.highlight-item {
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin: 10px 0;
+    padding: 8px;
+    background: var(--button-bg);
+    border-radius: 6px;
+    display: flex;
+    align-items: center; /* 垂直居中对齐 */
+    gap: 10px; /* 为圆点和文本之间添加间距 */
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    /* [修改] 开启自动连字符，并设置备用方案 */
+    overflow-wrap: break-word;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+    word-break: normal;
+}
+.highlight-item::before {
+    content: '•'; /* 定义内容为圆点 */
+    color: var(--text-primary); /* 颜色跟随主题的主要文本颜色 */
+    font-size: 1.5rem; /* 圆点大小 */
+    line-height: 1; /* 防止影响布局行高 */
+}
+.highlights .source-link:hover {
+    color: var(--brand-cyan); /* 鼠标悬浮时变为品牌青色 */
+}
+html[data-theme="dark"] .highlight-item:hover { background: rgba(0, 255, 255, 0.1); transform: translateX(5px); box-shadow: 0 3px 8px rgba(0, 255, 255, 0.1); }
+html[data-theme="light"] .highlight-item:hover { background: rgba(0, 123, 255, 0.1); transform: translateX(5px); box-shadow: 0 3px 8px rgba(0, 123, 255, 0.1); }
+html[data-theme="gray"] .highlight-item:hover { background: rgba(0, 86, 179, 0.1); transform: translateX(5px); box-shadow: 0 3px 8px rgba(0, 86, 179, 0.1); }
+.news-item { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); border: 1px solid var(--card-border); position: relative; overflow: hidden; }
+.news-item:first-child { border-top: none; }
+.news-title {
+    color: var(--text-primary);
+    margin: 10px 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--card-border);
+    line-height: 1.3;
+    /* [修改] 开启自动连字符，并设置备用方案 */
+    overflow-wrap: break-word;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+    word-break: normal;
+}
+.image-gallery-container {
+    margin: 20px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+.image-gallery {
+    display: flex;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    gap: 15px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-snap-type: x mandatory;
+}
+.image-gallery::-webkit-scrollbar { display: none; }
+.image-container {
+    flex: 0 0 100%;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: var(--button-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    scroll-snap-align: center;
+    position: relative;
+    cursor: zoom-in; /* 改变鼠标指针，提示可点击 */
+}
+.image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+.image-container:hover img {
+    transform: scale(1.05);
+}
+
+/* 优化点2: 根据用户要求，隐藏主图库的左右导航按钮 */
+.gallery-nav {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: var(--nav-bg);
+    backdrop-filter: blur(5px);
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    color: var(--text-primary);
+    font-size: 1rem;
+    border: 1px solid transparent;
+}
+.gallery-nav:hover {
+    background: var(--accent-color);
+    color: var(--bg-main);
+    transform: translateY(-50%) scale(1.1);
+}
+.gallery-nav.prev { left: 15px; }
+.gallery-nav.next { right: 15px; }
+.gallery-indicators {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    z-index: 10;
+    padding: 5px 10px;
+    background: var(--nav-bg);
+    backdrop-filter: blur(5px);
+    border-radius: 20px;
+}
+.indicator {
+    width: 20px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--indicator-inactive);
+    cursor: pointer;
+    transition: all 0.4s ease;
+}
+.indicator.active {
+    background: var(--brand-cyan); /* 使用品牌青色 */
+    width: 30px;
+}
+
+/* --- 全屏图片查看器（Lightbox）样式 --- */
+.fullscreen-viewer {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    -webkit-user-select: none; /* 禁止文本选中 */
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.fullscreen-viewer.show {
+    opacity: 1;
+    visibility: visible;
+}
+.fullscreen-viewer img {
+    max-width: 90%;
+    max-height: 85%;
+    object-fit: contain;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out; /* 为图片切换添加过渡 */
+    transform: scale(1);
+    opacity: 1;
+}
+/* 图片切换时的动画效果 */
+.fullscreen-viewer img.fade-out {
+    transform: scale(0.95);
+    opacity: 0;
+}
+/* 关闭按钮 */
+.fullscreen-close {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    color: #fff;
+    background: rgba(40, 40, 40, 0.7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s, background-color 0.3s;
+}
+.fullscreen-close:hover {
+    transform: rotate(90deg);
+    background-color: rgba(255, 0, 0, 0.8);
+}
+/* 左右导航箭头 (悬浮时保留) */
+.fullscreen-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 45px;
+    height: 45px;
+    font-size: 22px;
+    color: #fff;
+    background: rgba(40, 40, 40, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.3s, background-color 0.3s;
+}
+.fullscreen-nav:hover {
+    transform: translateY(-50%) scale(1.1);
+    background: var(--accent-color);
+}
+.fullscreen-nav.prev { left: 20px; }
+.fullscreen-nav.next { right: 20px; }
+/* --- 全屏查看器样式结束 --- */
+
+.news-content p { margin-bottom: 12px; }
+.source-link {
+    display: inline-flex; /* 确保 transform 生效 */
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-accent);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 0.95em;
+    margin-left: 4px;
+    vertical-align: baseline;
+    line-height: 1;
+    margin-top: 0 !important;
+}
+.source-link:hover {
+    color: var(--brand-cyan); /*统一悬浮颜色为品牌青色 */
+    text-decoration: underline;
+    transform: scale(1.25); /* [新增] 鼠标悬浮时放大 */
+}
+.source-link i { font-size: 0.95em; margin-left: 3px; vertical-align: middle; }
+footer { text-align: center; margin-top: 40px; padding: 20px; border-top: 1px solid var(--card-border); background: var(--card-bg); border-radius: 12px; }
+
+/* --- 返回顶部按钮样式 --- */
+#back-to-top {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+    background-color: var(--accent-color);
+    color: var(--nav-hover-color);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-size: 1.2rem;
+}
+#back-to-top.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+#back-to-top:hover {
+    transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+
+    /*
+     * 逻辑1: 整体收紧页面两侧间距
+     */
+    body {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    /*
+     * 逻辑2: 收紧 Highlights (要闻) 区域的间距
+     */
+    .highlights {
+        padding: 20px 15px;
+    }
+
+    /*
+     * 逻辑3: 优化新闻卡片布局
+     */
+    .news-item {
+        padding: 15px 12px;
+        border: 1px solid transparent;
+        background-clip: padding-box;
+        border-image: linear-gradient(to bottom right, var(--card-border), transparent) 1;
+    }
+
+    /*
+     * 逻辑4: 让新闻标题“边缘出血”，并减少其下边距
+     */
+    .news-title {
+        margin: -15px -12px 8px -12px;
+        padding: 12px 12px;
+        background: linear-gradient(to right, rgba(0, 255, 255, 0.05), transparent);
+        border-radius: 12px 12px 0 0; /* [修改] 为移动端标题的左上和右上角添加圆角 */
+    }
+    html[data-theme="light"] .news-title {
+        background: linear-gradient(to right, rgba(0, 123, 255, 0.05), transparent);
+    }
+    html[data-theme="gray"] .news-title {
+        background: linear-gradient(to right, rgba(0, 86, 179, 0.05), transparent);
+    }
+
+    /*
+     * 逻辑5: 优化日期（meta-info）的位置和间距
+     */
+    .meta-info {
+        justify-content: center;    /* [最终修正] 将对齐方式从 flex-end 改回 center，使其恢复居中 */
+        padding: 0;
+        margin: 0 0 15px 0;
+    }
+
+    /*
+     * 逻辑6: 让图片库“边缘出血”
+     */
+    .image-gallery-container {
+        margin-left: -12px;
+        margin-right: -12px;
+        margin-top: 0;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    /*
+     * 逻辑7: 移除新闻正文自身的内边距
+     */
+    .news-content {
+        padding: 0;
+        margin-top: 15px;
+        background: none;
+        border: none;
+    }
+}
+
+    </style>
+
+</head>
+<body>
+<!-- 浮动控制元素的容器 -->
+<div class="top-controls" id="top-controls">
+    <div class="theme-selector">
+        <select id="themeSelect">
+            <option value="dark" data-ru="Темная" data-zh="深色" data-en="Dark">深色</option>
+            <option value="light" data-ru="Светлая" data-zh="浅色" data-en="Light">浅色</option>
+            <option value="gray" data-ru="Серая" data-zh="灰色" data-en="Gray">灰色</option>
+        </select>
+    </div>
+    <div class="language-selector">
+        <select id="languageSelect">
+            <option value="ru">Русский</option>
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+        </select>
+    </div>
+</div>
+
+<div class="header-container" id="main-header">
+<!--    <svg class="header-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 300" width="700" height="300">-->
+<!--        <defs>-->
+<!--            <style>-->
+<!--                /*-->
+<!--                   注意: 为了达到最佳效果，建议您加载logo所使用的精确字体。-->
+<!--                   这里的 'Arial', 'Helvetica' 是一个通用的粗体无衬线字体作为替代。-->
+<!--                */-->
+<!--                .main-text-font {-->
+<!--                  font-family: 'Arial', 'Helvetica', sans-serif;-->
+<!--                  font-size: 48px;-->
+<!--                  font-weight: 900; /* 非常粗的字重 */-->
+<!--                  letter-spacing: 2px;-->
+<!--                }-->
+<!--                .tagline-font {-->
+<!--                  font-family: 'Arial', 'Helvetica', sans-serif;-->
+<!--                  font-size: 18px;-->
+<!--                  font-weight: normal;-->
+<!--                  letter-spacing: 0.5px;-->
+<!--                }-->
+<!--                .cyan-color {-->
+<!--                  fill: #00E5E5; /* 青色 */-->
+<!--                }-->
+<!--                .black-color {-->
+<!--                  fill: #000000; /* 黑色 */-->
+<!--                }-->
+<!--            </style>-->
+<!--        </defs>-->
+
+<!--        &lt;!&ndash; 第一行：图标 &ndash;&gt;-->
+<!--        <g id="logo-icon" transform="translate(350, 80)">-->
+<!--            &lt;!&ndash; 中间的圆圈 &ndash;&gt;-->
+<!--            <circle class="cyan-color" cx="0" cy="0" r="10"/>-->
+<!--            &lt;!&ndash; 左边的形状 (指向左侧，右边是内凹弧形) &ndash;&gt;-->
+<!--            <path class="cyan-color" d="M -55,0 L -25,-22 C -40,0 -40,0 -25,22 L -55,0 Z"/>-->
+<!--            &lt;!&ndash; 右边的形状 (指向右侧，左边是内凹弧形) &ndash;&gt;-->
+<!--            <path class="cyan-color" d="M 55,0 L 25,-22 C 40,0 40,0 25,22 L 55,0 Z"/>-->
+<!--        </g>-->
+
+<!--        &lt;!&ndash; 第二行：主要文字 "ATOM INTELLIGENCE" &ndash;&gt;-->
+<!--        <text x="50%" y="185" text-anchor="middle" class="main-text-font">-->
+<!--            <tspan class="black-color">ATOM INTELLIGENCE</tspan>-->
+<!--        </text>-->
+
+<!--        &lt;!&ndash; 第三行：标语 &ndash;&gt;-->
+<!--        <text x="50%" y="235" text-anchor="middle" class="tagline-font black-color">-->
+<!--            Transforming Insights, Powering Innovation-->
+<!--        </text>-->
+
+<!--    </svg>-->
+        <img src="https://tg-connors-projects-87a4e157.vercel.app/logo_white.png" alt="Atom Intelligence" class="header-logo" id="logoImage">
+</div>
+
+<div class="stats-bar">
+    <div class="stat-item">
+        <i class="fas fa-file-word fa-beat-fade"></i>
+        <span>
+            <span id="wordsCount" data-ru="1156" data-zh="2337" data-en="1157">1156</span>
+            <span id="wordsText" data-ru="Слов" data-zh="字" data-en="Words">Слов</span>
+        </span>
+    </div>
+    <div class="stat-item">
+        <i class="fas fa-hourglass-half fa-spin"></i>
+        <span>
+            <span id="minsCount" data-ru="3" data-zh="6" data-en="3">3</span>
+            <span id="minsText" data-ru="Мин" data-zh="分钟" data-en="Mins">Мин</span>
+        </span>
+    </div>
+</div>
+
+<!-- 主体内容 -->
+
+<section class="highlights">
+    <h2><i class="fas fa-star"></i> <span id="highlightsText">Основные моменты</span></h2>
+    
+    <div class="highlight-item"
+         data-ru='"\u0411\u0418\u0414 \u0432 \u042f\u043f\u043e\u043d\u0438\u0438 \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u0435\u0442 \u0441\u043a\u0438\u0434\u043a\u0443 \u0434\u043e \u003cb\u003e1\u202f000\u202f000 \u0438\u0435\u043d\u003c/b\u003e, \u043e\u0444\u0438\u0446\u0438\u0430\u043b\u044c\u043d\u0430\u044f \u0446\u0435\u043d\u0430 \u0441\u043d\u0438\u0436\u0435\u043d\u0430 \u0434\u043e \u003cb\u003e50\u202f%\u003c/b\u003e; \u0441\u043e\u0432\u043e\u043a\u0443\u043f\u043d\u044b\u0435 \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u0437\u0430 2023\u20112025 \u0433\u043e\u0434\u044b \u0441\u043e\u0441\u0442\u0430\u0432\u0438\u043b\u0438 \u003cb\u003e5\u202f300 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439\u003c/b\u003e, \u0432 \u0438\u044e\u043d\u0435 2025 \u0433\u043e\u0434\u0430 \u043f\u0440\u043e\u0434\u0430\u043d\u043e \u003cb\u003e512 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439\u003c/b\u003e, Nissan Sakura \u2014 \u003cb\u003e1\u202f137 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439\u003c/b\u003e."'
+         data-zh='"\u6bd4\u4e9a\u8fea\u5728\u65e5\u672c\u6700\u9ad8\u63d0\u4f9b\u003cb\u003e100\u4e07\u65e5\u5143\u003c/b\u003e\u6298\u6263\uff0c\u5b98\u65b9\u4ef7\u964d\u81f3\u003cb\u003e50%\u003c/b\u003e\uff1b2023\u20112025\u7d2f\u8ba1\u9500\u91cf\u003cb\u003e5\uff0c300\u8f86\u003c/b\u003e\uff0c2025\u5e746\u6708\u6708\u9500\u003cb\u003e512\u8f86\u003c/b\u003e\uff0c\u65e5\u4ea7Sakura\u003cb\u003e1\uff0c137\u8f86\u003c/b\u003e\u3002"'
+         data-en='"BYD offers up to \u003cb\u003e\u00a51,000,000\u003c/b\u003e discount in Japan, the official price reduced to \u003cb\u003e50%\u003c/b\u003e; cumulative sales from 2023\u20112025 total \u003cb\u003e5,300 units\u003c/b\u003e, June 2025 monthly sales \u003cb\u003e512 units\u003c/b\u003e, Nissan Sakura \u003cb\u003e1,137 units\u003c/b\u003e."'>
+        <span>БИД в Японии предлагает скидку до <b>1 000 000 иен</b>, официальная цена снижена до <b>50 %</b>; совокупные продажи за 2023‑2025 годы составили <b>5 300 автомобилей</b>, в июне 2025 года продано <b>512 автомобилей</b>, Nissan Sakura — <b>1 137 автомобилей</b>. <a href="https://auto.gasgoo.com/news/202509/29I70434521C501.shtml" class="source-link"><i class="fas fa-arrow-up-right-from-square"></i></a></span>
+    </div>
+    
+    <div class="highlight-item"
+         data-ru='"27 \u0441\u0435\u043d\u0442\u044f\u0431\u0440\u044f 2025 \u0433\u043e\u0434\u0430 \u043c\u0430\u0440\u043a\u0430 \u043e\u0431\u043e\u0440\u0443\u0434\u043e\u0432\u0430\u043d\u0438\u044f \u0431\u044b\u043b\u0430 \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u0430 \u043d\u0430 \u043a\u0438\u0442\u0430\u0439\u0441\u043a\u043e\u043c \u0440\u044b\u043d\u043a\u0435 \u0434\u043b\u044f \u0444\u0440\u0443\u043a\u0442\u043e\u0432 S, \u0441 \u0437\u0430\u043a\u0430\u0437\u043e\u043c \u043d\u0430 55 840  \u0438 \u0441\u043e\u0432\u043e\u043a\u0443\u043f\u043d\u043e\u0439 \u043f\u043e\u0441\u0442\u0430\u0432\u043a\u043e\u0439 \u003cb\u003e 7250 \u003c/b\u003e \u043f\u043e \u0446\u0435\u043d\u0435 \u043f\u0440\u043e\u0434\u0430\u0436\u0438 6,68-798 000 \u0434\u043e\u043b\u043b\u0430\u0440\u043e\u0432 \u0421\u0428\u0410 \u0434\u043b\u044f \u0443\u0434\u043e\u0432\u043b\u0435\u0442\u0432\u043e\u0440\u0435\u043d\u0438\u044f \u0440\u044b\u043d\u043e\u0447\u043d\u043e\u0433\u043e \u0441\u043f\u0440\u043e\u0441\u0430 \u043d\u0430 \u043a\u043e\u043c\u043f\u0430\u043a\u0442\u043d\u044b\u0435 \u044d\u043b\u0435\u043a\u0442\u0440\u043e\u043c\u043e\u0431\u0438\u043b\u0438."'
+         data-zh='"\u4e94\u83f1\u54c1\u724c2025\u5e749\u670827\u65e5\u5728\u4e2d\u56fd\u4e0a\u5e02\u7f24\u679cS\uff0c\u8ba2\u5355\u003cb\u003e55\uff0c840\u003c/b\u003e\u53f0\uff0c\u7d2f\u8ba1\u4ea4\u4ed8\u003cb\u003e7\uff0c250\u003c/b\u003e\u53f0\uff0c\u552e\u4ef76.68-7.98\u4e07\u5143\uff0c\u6ee1\u8db3\u7d27\u51d1\u578b\u7535\u52a8\u8f66\u5e02\u573a\u9700\u6c42\u3002"'
+         data-en='"Wuling Motors launched the Bingo S in China on September 27, 2025, with orders \u003cb\u003e55,840\u003c/b\u003e units and cumulative deliveries \u003cb\u003e7,250\u003c/b\u003e units, priced at 66,800\u201379,800 yuan, meeting the demand of the compact electric vehicle market."'>
+        <span>27 сентября 2025 года марка оборудования была представлена на китайском рынке для фруктов S, с заказом на 55 840  и совокупной поставкой <b> 7250 </b> по цене продажи 6,68-798 000 долларов США для удовлетворения рыночного спроса на компактные электромобили. <a href="https://news.yiche.com/xiaoliangshuju/20250929/10103991400.html" class="source-link"><i class="fas fa-arrow-up-right-from-square"></i></a></span>
+    </div>
+    
+    <div class="highlight-item"
+         data-ru='"Youbixuan 29 \u0441\u0435\u043d\u0442\u044f\u0431\u0440\u044f \u0441 Tianqi Automation \u043f\u043e\u0434\u043f\u0438\u0441\u0430\u043b \u003cb\u003e\u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442 \u043d\u0430 \u043f\u043e\u0441\u0442\u0430\u0432\u043a\u0443 \u043f\u0440\u043e\u043c\u044b\u0448\u043b\u0435\u043d\u043d\u044b\u0445 \u0433\u0443\u043c\u0430\u043d\u043e\u0438\u0434\u043d\u044b\u0445 \u0440\u043e\u0431\u043e\u0442\u043e\u0432 \u0441\u0435\u0440\u0438\u0438 Walker S \u043d\u0430 \u0441\u0443\u043c\u043c\u0443 30 \u043c\u043b\u043d \u044e\u0430\u043d\u0435\u0439\u003c/b\u003e, \u043e\u0431\u0449\u0438\u0439 \u043e\u0431\u044a\u0451\u043c \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u043e\u0432 \u0434\u043e\u0441\u0442\u0438\u0433 \u003cb\u003e430 \u043c\u043b\u043d \u044e\u0430\u043d\u0435\u0439\u003c/b\u003e, \u0432\u043a\u043b\u044e\u0447\u0430\u044f \u043f\u0435\u0440\u0432\u0443\u044e \u0441\u0434\u0435\u043b\u043a\u0443 \u044d\u0442\u043e\u0433\u043e \u043c\u0435\u0441\u044f\u0446\u0430 \u043d\u0430 \u0441\u0443\u043c\u043c\u0443 \u003cb\u003e250 \u043c\u043b\u043d \u044e\u0430\u043d\u0435\u0439\u003c/b\u003e."'
+         data-zh='"\u4f18\u5fc5\u90099\u670829\u65e5\u4e0e\u5929\u5947\u81ea\u52a8\u5316\u7b7e\u8ba2\u003cb\u003e3000\u4e07\u5143\u003c/b\u003eWalker S\u7cfb\u5217\u5de5\u4e1a\u4eba\u5f62\u673a\u5668\u4eba\u91c7\u8d2d\u5408\u540c\uff0c\u7d2f\u8ba1\u5408\u540c\u989d\u5df2\u8fbe\u003cb\u003e4.3\u4ebf\u5143\u003c/b\u003e\uff0c\u5176\u4e2d\u5305\u62ec\u672c\u6708\u9996\u5355\u003cb\u003e2.5\u4ebf\u5143\u003c/b\u003e\u3002"'
+         data-en='"Youbixuan on September 29 signed a \u003cb\u003eCNY 30 million\u003c/b\u003e Walker S series industrial humanoid robot procurement contract with Tianqi Automation, bringing the total contract value to \u003cb\u003eCNY 430 million\u003c/b\u003e, which includes this month\u0027s first order of \u003cb\u003eCNY 250 million\u003c/b\u003e."'>
+        <span>Youbixuan 29 сентября с Tianqi Automation подписал <b>контракт на поставку промышленных гуманоидных роботов серии Walker S на сумму 30 млн юаней</b>, общий объём контрактов достиг <b>430 млн юаней</b>, включая первую сделку этого месяца на сумму <b>250 млн юаней</b>. <a href="https://auto.gasgoo.com/news/202509/29I70434508C601.shtml" class="source-link"><i class="fas fa-arrow-up-right-from-square"></i></a></span>
+    </div>
+    
+    <div class="highlight-item"
+         data-ru='"Genesis GV80 \u0441 2020 \u0433\u043e\u0434\u0430 \u0437\u0430\u043f\u0443\u0449\u0435\u043d \u0432 \u043f\u0440\u043e\u0434\u0430\u0436\u0443 \u0432 \u0421\u0428\u0410, \u0441\u043e\u0432\u043e\u043a\u0443\u043f\u043d\u044b\u0439 \u043e\u0431\u044a\u0451\u043c \u043f\u0440\u043e\u0434\u0430\u0436 \u003cb\u003e100,446\u003c/b\u003e \u0435\u0434\u0438\u043d\u0438\u0446, \u0432 \u043f\u0440\u043e\u0434\u0430\u0436\u0430\u0445 \u0437\u0430 \u043f\u0435\u0440\u0432\u044b\u0435 \u0432\u043e\u0441\u0435\u043c\u044c \u043c\u0435\u0441\u044f\u0446\u0435\u0432 2025 \u0433\u043e\u0434\u0430 \u0440\u043e\u0441\u0442 \u043f\u043e \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u044e \u0441 \u043f\u0440\u043e\u0448\u043b\u044b\u043c \u0433\u043e\u0434\u043e\u043c \u003cb\u003e20%\u003c/b\u003e, \u0441\u0440\u0435\u0434\u043d\u044f\u044f \u0446\u0435\u043d\u0430 \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u003cb\u003e64,766 \u0434\u043e\u043b\u043b\u0430\u0440\u043e\u0432 \u0421\u0428\u0410\u003c/b\u003e, \u0440\u043e\u0441\u0442 \u0446\u0435\u043d\u044b \u003cb\u003e4.2%\u003c/b\u003e."'
+         data-zh='"\u6377\u5c3c\u8d5b\u601dGV80\u81ea2020\u5e74\u5728\u7f8e\u4e0a\u5e02\uff0c\u7d2f\u8ba1\u9500\u91cf\u003cb\u003e100\uff0c446\u003c/b\u003e\u8f86\uff0c2025\u5e74\u524d8\u6708\u9500\u91cf\u540c\u6bd4\u003cb\u003e20%\u003c/b\u003e\u589e\u957f\uff0c\u5e73\u5747\u6210\u4ea4\u4ef7\u003cb\u003e64\uff0c766\u7f8e\u5143\u003c/b\u003e\uff0c\u6da8\u5e45\u003cb\u003e4.2%\u003c/b\u003e\u3002"'
+         data-en='"The Genesis GV80, launched in the United States in 2020, has accumulated sales of \u003cb\u003e100,446\u003c/b\u003e units, with sales in the first eight months of 2025 up \u003cb\u003e20%\u003c/b\u003e year\u2011on\u2011year, an average transaction price of \u003cb\u003e$64,766\u003c/b\u003e, and a price increase of \u003cb\u003e4.2%\u003c/b\u003e."'>
+        <span>Genesis GV80 с 2020 года запущен в продажу в США, совокупный объём продаж <b>100,446</b> единиц, в продажах за первые восемь месяцев 2025 года рост по сравнению с прошлым годом <b>20%</b>, средняя цена продажи <b>64,766 долларов США</b>, рост цены <b>4.2%</b>. <a href="https://auto.gasgoo.com/news/202509/29I70434507C110.shtml" class="source-link"><i class="fas fa-arrow-up-right-from-square"></i></a></span>
+    </div>
+    
+    <div class="highlight-item"
+         data-ru='"\u0424\u0438\u043b\u0438\u0430\u043b Shenzhou Car Rental \u0432 \u041d\u0430\u043d\u044c\u043d\u0438\u043d\u0435 \u0432 \u003cb\u003e\u0441\u0435\u043d\u0442\u044f\u0431\u0440\u0435 2025 \u0433\u043e\u0434\u0430\u003c/b\u003e \u043e\u0442\u043a\u0440\u044b\u043b \u0434\u0432\u0430 \u043a\u0440\u0443\u043f\u043d\u044b\u0445 \u043c\u0430\u0433\u0430\u0437\u0438\u043d\u0430 \u0432 \u0430\u044d\u0440\u043e\u043f\u043e\u0440\u0442\u0443 \u0438 \u043d\u0430 \u0436\u0435\u043b\u0435\u0437\u043d\u043e\u0434\u043e\u0440\u043e\u0436\u043d\u043e\u043c \u0432\u043e\u043a\u0437\u0430\u043b\u0435, \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e \u0442\u043e\u0447\u0435\u043a \u0432 \u043f\u0440\u043e\u0432\u0438\u043d\u0446\u0438\u0438 \u0443\u0436\u0435 \u0434\u043e\u0441\u0442\u0438\u0433\u043b\u043e \u003cb\u003e125\u003c/b\u003e \u0448\u0442., \u0438\u0437 \u043d\u0438\u0445 \u0432 \u041d\u0430\u043d\u044c\u043d\u0438\u043d\u0435 \u003cb\u003e45\u003c/b\u003e \u0448\u0442., \u0443\u0440\u043e\u0432\u0435\u043d\u044c \u0431\u0440\u043e\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f \u0432 \u0437\u043e\u043b\u043e\u0442\u0443\u044e \u043d\u0435\u0434\u0435\u043b\u044e \u043a \u041d\u0430\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e\u043c\u0443 \u0434\u043d\u044e \u043f\u043e\u0447\u0442\u0438 \u0434\u043e\u0441\u0442\u0438\u0433 \u043f\u043e\u043b\u043d\u043e\u0439 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0438."'
+         data-zh='"\u795e\u5dde\u79df\u8f66\u5357\u5b81\u5206\u516c\u53f8\u5728\u003cb\u003e2025\u5e749\u6708\u003c/b\u003e\u5f00\u901a\u673a\u573a\u3001\u706b\u8f66\u7ad9\u4e24\u5927\u95e8\u5e97\uff0c\u7701\u5185\u7f51\u70b9\u5df2\u8fbe\u003cb\u003e125\u003c/b\u003e\u4e2a\uff0c\u5176\u4e2d\u5357\u5b81\u003cb\u003e45\u003c/b\u003e\u4e2a\uff0c\u56fd\u5e86\u9ec4\u91d1\u5468\u9884\u8ba2\u7387\u63a5\u8fd1\u6ee1\u989d\u3002"'
+         data-en='"Shenzhou Car Rental Nanning Branch opened two major stores at the airport and railway station in \u003cb\u003eSeptember 2025\u003c/b\u003e, bringing the number of outlets in the province to \u003cb\u003e125\u003c/b\u003e, including \u003cb\u003e45\u003c/b\u003e in Nanning, and the booking rate for the National Day Golden Week is close to full capacity."'>
+        <span>Филиал Shenzhou Car Rental в Наньнине в <b>сентябре 2025 года</b> открыл два крупных магазина в аэропорту и на железнодорожном вокзале, количество точек в провинции уже достигло <b>125</b> шт., из них в Наньнине <b>45</b> шт., уровень бронирования в золотую неделю к Национальному дню почти достиг полной загрузки. <a href="https://auto.cri.cn/20250928/377f83b5-3b80-e1ce-f4fe-301339d57d45.html" class="source-link"><i class="fas fa-arrow-up-right-from-square"></i></a></span>
+    </div>
+    
+</section>
+
+
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u0411\u0418\u0414 (BYD) \u0432 \u042f\u043f\u043e\u043d\u0438\u0438 \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u0435\u0442 \u0441\u043a\u0438\u0434\u043a\u0443 \u0432 6\u202f700 \u0434\u043e\u043b\u043b\u0430\u0440\u043e\u0432 \u0421\u0428\u0410, \u0447\u0442\u043e\u0431\u044b \u0441\u0442\u0438\u043c\u0443\u043b\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043f\u0440\u043e\u0434\u0430\u0436\u0438."'
+        data-zh='"\u6bd4\u4e9a\u8fea\u5728\u65e5\u672c\u63d0\u4f9b6\uff0c700\u7f8e\u5143\u6298\u6263\u4ee5\u63d0\u632f\u9500\u91cf\u3002"'
+        data-en='"BYD offers a $6,700 discount in Japan to boost sales."'>БИД (BYD) в Японии предлагает скидку в 6 700 долларов США, чтобы стимулировать продажи.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-29</span>
+    </div>
+
+    
+    <div class="image-gallery-container">
+        <div class="image-gallery" id="gallery-1">
+            
+            <div class="image-container">
+                <img src="https://imagecn.gasgoo.com/moblogo/News/UEditor/image/20250929/6389474073837791278554974.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+        </div>
+        <div class="gallery-nav prev" onclick="scrollGallery('gallery-1', -1)"><i class="fas fa-chevron-left"></i></div>
+        <div class="gallery-nav next" onclick="scrollGallery('gallery-1', 1)"><i class="fas fa-chevron-right"></i></div>
+        <div class="gallery-indicators" id="indicators-1"></div>
+    </div>
+    
+
+    <div class="news-content"
+         data-ru='"\u0411\u0418\u0414 (BYD) \u0432 \u042f\u043f\u043e\u043d\u0438\u0438 \u0437\u0430 \u0431\u043e\u043b\u0435\u0435 \u0447\u0435\u043c \u0434\u0432\u0430 \u0433\u043e\u0434\u0430 \u043f\u0440\u043e\u0434\u0430\u043b\u0430 \u0432\u0441\u0435\u0433\u043e \u003cb\u003e5,300 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439\u003c/b\u003e, \u043f\u0435\u0440\u0435\u043a\u043b\u044e\u0447\u0438\u043b\u0430\u0441\u044c \u043d\u0430 \u0441\u043a\u0438\u0434\u043a\u0438 \u0434\u043e \u003cb\u003e1\u202f000\u202f000 \u0438\u0435\u043d\u003c/b\u003e, \u043e\u0444\u0438\u0446\u0438\u0430\u043b\u044c\u043d\u0430\u044f \u0446\u0435\u043d\u0430 \u0443\u043f\u0430\u043b\u0430 \u0434\u043e \u003cb\u003e50\u202f%\u003c/b\u003e, \u043d\u043e \u044d\u0442\u043e \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u0432\u0440\u0435\u0434\u0438\u0442\u044c \u0438\u043c\u0438\u0434\u0436\u0443 \u0431\u0440\u0435\u043d\u0434\u0430 \u0438 \u0441\u0442\u043e\u0438\u043c\u043e\u0441\u0442\u0438 \u043f\u0435\u0440\u0435\u043f\u0440\u043e\u0434\u0430\u0436\u0438; \u043c\u0435\u0441\u0442\u043d\u044b\u0435 \u0431\u0440\u0435\u043d\u0434\u044b, \u0442\u0430\u043a\u0438\u0435 \u043a\u0430\u043a Nissan \u0438 Toyota, \u043f\u043e\u2011\u043f\u0440\u0435\u0436\u043d\u0435\u043c\u0443 \u0434\u043e\u043c\u0438\u043d\u0438\u0440\u0443\u044e\u0442."'
+         data-zh='"\u6bd4\u4e9a\u8fea\u5728\u65e5\u672c\u4e24\u5e74\u591a\u9500\u91cf\u4ec5\u003cb\u003e5\uff0c300\u8f86\u003c/b\u003e\uff0c\u8f6c\u5411\u6700\u9ad8\u003cb\u003e100\u4e07\u65e5\u5143\u003c/b\u003e\u6298\u6263\u4fc3\u9500\uff0c\u5b98\u65b9\u4ef7\u964d\u81f3\u003cb\u003e50%\u003c/b\u003e\uff0c\u4f46\u53ef\u80fd\u635f\u5bb3\u54c1\u724c\u5f62\u8c61\u4e0e\u8f6c\u552e\u4ef7\u503c\uff0c\u65e5\u4ea7\u3001\u4e30\u7530\u7b49\u672c\u571f\u54c1\u724c\u4ecd\u5360\u4f18\u52bf\u3002"'
+         data-en='"BYD\u0027s sales in Japan over more than two years have been only \u003cb\u003e5,300 vehicles\u003c/b\u003e, shifting to a discount promotion of up to \u003cb\u003e1,000,000 yen\u003c/b\u003e, with the official price reduced to \u003cb\u003e50%\u003c/b\u003e, but this may damage the brand image and resale value, while domestic brands such as Nissan and Toyota still hold the advantage."'>
+        БИД (BYD) в Японии за более чем два года продала всего <b>5,300 автомобилей</b>, переключилась на скидки до <b>1 000 000 иен</b>, официальная цена упала до <b>50 %</b>, но это может повредить имиджу бренда и стоимости перепродажи; местные бренды, такие как Nissan и Toyota, по‑прежнему доминируют.
+        <a href="https://auto.gasgoo.com/news/202509/29I70434521C501.shtml" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u0423\u043b\u0438\u043d Bingo S: \u043f\u043e\u0441\u043b\u0435 \u0432\u044b\u0445\u043e\u0434\u0430 \u043d\u0430 \u0440\u044b\u043d\u043e\u043a \u043f\u043e\u043b\u0443\u0447\u0435\u043d\u043e 55\u202f840 \u0437\u0430\u043a\u0430\u0437\u043e\u0432, \u043a\u0443\u043c\u0443\u043b\u044f\u0442\u0438\u0432\u043d\u043e \u043f\u043e\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u043e 7\u202f250 \u0435\u0434\u0438\u043d\u0438\u0446."'
+        data-zh='"\u4e94\u83f1\u7f24\u679cS\u4e0a\u5e02\u8ba2\u535555840\u53f0 \u5df2\u7d2f\u8ba1\u4ea4\u4ed87250\u53f0\u3002"'
+        data-en='"Wuling Motors\u0027 Bingo S has received 55,840 orders at launch and has cumulatively delivered 7,250 units."'>Улин Bingo S: после выхода на рынок получено 55 840 заказов, кумулятивно поставлено 7 250 единиц.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-29</span>
+    </div>
+
+    
+    <div class="image-gallery-container">
+        <div class="image-gallery" id="gallery-2">
+            
+            <div class="image-container">
+                <img src="https://img5.bitautoimg.com/usercenter/news/2025/09/29/w800_m0_yichecar_93bdbeb9-0b22-4aa4-b2eb-78235dd2dd1c.jpg" alt="新闻配图" loading="lazy">
+            </div>
+            
+            <div class="image-container">
+                <img src="https://img5.bitautoimg.com/usercenter/news/2025/09/29/w800_m0_yichecar_42a1f45c-e2b5-4b30-a814-288246dac2bb.jpg" alt="新闻配图" loading="lazy">
+            </div>
+            
+            <div class="image-container">
+                <img src="https://img5.bitautoimg.com/usercenter/news/2025/09/29/w800_m0_yichecar_8d47d12e-b630-4994-a61c-146801e1a401.jpg" alt="新闻配图" loading="lazy">
+            </div>
+            
+            <div class="image-container">
+                <img src="https://img5.bitautoimg.com/usercenter/news/2025/09/29/w800_m0_yichecar_5e8d77ba-510c-4198-9fbd-71d2c290ac21.jpg" alt="新闻配图" loading="lazy">
+            </div>
+            
+        </div>
+        <div class="gallery-nav prev" onclick="scrollGallery('gallery-2', -1)"><i class="fas fa-chevron-left"></i></div>
+        <div class="gallery-nav next" onclick="scrollGallery('gallery-2', 1)"><i class="fas fa-chevron-right"></i></div>
+        <div class="gallery-indicators" id="indicators-2"></div>
+    </div>
+    
+
+    <div class="news-content"
+         data-ru='"\u0423\u043b\u0438\u043d Bingo S \u0431\u044b\u043b \u043e\u0444\u0438\u0446\u0438\u0430\u043b\u044c\u043d\u043e \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043b\u0435\u043d 27 \u0441\u0435\u043d\u0442\u044f\u0431\u0440\u044f 2025 \u0433\u043e\u0434\u0430, \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u0435\u0442\u0441\u044f \u0432 4 \u043c\u043e\u0434\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f\u0445, \u0446\u0435\u043d\u0430 \u043e\u0442 66\u202f800 \u0434\u043e 79\u202f800 \u044e\u0430\u043d\u0435\u0439 (\u0446\u0435\u043d\u0430 \u0441\u043e \u0441\u043a\u0438\u0434\u043a\u043e\u0439 \u043f\u0440\u0438 \u043e\u0431\u043c\u0435\u043d\u0435 \u043e\u0442 63\u202f800 \u0434\u043e 76\u202f800 \u044e\u0430\u043d\u0435\u0439), \u0437\u0430\u043a\u0430\u0437\u043e\u0432 \u003cb\u003e55\u202f840\u003c/b\u003e \u0435\u0434\u0438\u043d\u0438\u0446, \u0438\u0437 \u043d\u0438\u0445 \u0443\u0436\u0435 \u043f\u043e\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u043e \u003cb\u003e7\u202f250\u003c/b\u003e \u0435\u0434\u0438\u043d\u0438\u0446. \u0420\u0430\u0437\u043c\u0435\u0440\u044b \u043a\u0443\u0437\u043e\u0432\u0430 4265\u00d71785\u00d71600\u202f\u043c\u043c, \u043a\u043e\u043b\u0435\u0441\u043d\u0430\u044f \u0431\u0430\u0437\u0430 2610\u202f\u043c\u043c, \u043e\u0434\u0438\u043d \u044d\u043b\u0435\u043a\u0442\u0440\u043e\u0434\u0432\u0438\u0433\u0430\u0442\u0435\u043b\u044c \u043c\u043e\u0449\u043d\u043e\u0441\u0442\u044c\u044e 75\u202f\u043a\u0412\u0442, \u0431\u0430\u0442\u0430\u0440\u0435\u044f \u0438\u0437 \u0444\u043e\u0441\u0444\u0430\u0442\u043d\u043e\u0433\u043e \u0436\u0435\u043b\u0435\u0437\u043e\u2011\u043b\u0438\u0442\u0438\u0435\u0432\u043e\u0433\u043e \u0430\u043a\u043a\u0443\u043c\u0443\u043b\u044f\u0442\u043e\u0440\u0430, \u0437\u0430\u043f\u0430\u0441 \u0445\u043e\u0434\u0430 \u003cb\u003e325\u202f\u043a\u043c\u003c/b\u003e \u0438\u043b\u0438 \u003cb\u003e430\u202f\u043a\u043c\u003c/b\u003e."'
+         data-zh='"\u4e94\u83f1\u7f24\u679cS\u4e8e2025\u5e749\u670827\u65e5\u6b63\u5f0f\u4e0a\u5e02\uff0c\u63d0\u4f9b4\u6b3e\u8f66\u578b\uff0c\u552e\u4ef76.68-7.98\u4e07\u5143\uff08\u7f6e\u6362\u8865\u8d34\u4ef76.38-7.68\u4e07\u5143\uff09\uff0c\u8ba2\u5355\u003cb\u003e55\uff0c840\u003c/b\u003e\u53f0\uff0c\u5df2\u4ea4\u4ed8\u003cb\u003e7\uff0c250\u003c/b\u003e\u53f0\u3002\u8f66\u8eab\u5c3a\u5bf84265\u00d71785\u00d71600mm\uff0c\u8f74\u8ddd2610mm\uff0c\u5355\u7535\u673a75kW\uff0c\u78f7\u9178\u94c1\u9502\u7535\u6c60\uff0c\u7eed\u822a\u003cb\u003e325km\u003c/b\u003e\u6216\u003cb\u003e430km\u003c/b\u003e\u3002"'
+         data-en='"Wuling Motors Bingo S was officially launched on September 27, 2025, offering four variants, priced at 66,800\u201379,800 CNY (trade\u2011in subsidy price 63,800\u201376,800 CNY), orders \u003cb\u003e55,840\u003c/b\u003e units, and deliveries \u003cb\u003e7,250\u003c/b\u003e units. Body dimensions are 4265\u00d71785\u00d71600\u202fmm, wheelbase 2610\u202fmm, equipped with a single 75\u202fkW motor, lithium\u2011iron\u2011phosphate battery, and a range of \u003cb\u003e325\u202fkm\u003c/b\u003e or \u003cb\u003e430\u202fkm\u003c/b\u003e."'>
+        Улин Bingo S был официально представлен 27 сентября 2025 года, предлагается в 4 модификациях, цена от 66 800 до 79 800 юаней (цена со скидкой при обмене от 63 800 до 76 800 юаней), заказов <b>55 840</b> единиц, из них уже поставлено <b>7 250</b> единиц. Размеры кузова 4265×1785×1600 мм, колесная база 2610 мм, один электродвигатель мощностью 75 кВт, батарея из фосфатного железо‑литиевого аккумулятора, запас хода <b>325 км</b> или <b>430 км</b>.
+        <a href="https://news.yiche.com/xiaoliangshuju/20250929/10103991400.html" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"UBTECH \u0441\u043d\u043e\u0432\u0430 \u043f\u043e\u0434\u043f\u0438\u0441\u0430\u043b \u043a\u0440\u0443\u043f\u043d\u044b\u0439 \u0437\u0430\u043a\u0430\u0437 \u043d\u0430 30\u202f\u043c\u043b\u043d \u0433\u0443\u043c\u0430\u043d\u043e\u0438\u0434\u043d\u044b\u0445 \u0440\u043e\u0431\u043e\u0442\u043e\u0432."'
+        data-zh='"\u4f18\u5fc5\u9009\u518d\u7b7e3000\u4e07\u4eba\u5f62\u673a\u5668\u4eba\u5927\u5355\u3002"'
+        data-en='"UBTECH signs another huge order for 30 million humanoid robots."'>UBTECH снова подписал крупный заказ на 30 млн гуманоидных роботов.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-29</span>
+    </div>
+
+    
+    <div class="image-gallery-container">
+        <div class="image-gallery" id="gallery-3">
+            
+            <div class="image-container">
+                <img src="https://imagecn.gasgoo.com/moblogo/News/UEditor/820-X/20250929/6389473707630130068064021.jpg" alt="新闻配图" loading="lazy">
+            </div>
+            
+        </div>
+        <div class="gallery-nav prev" onclick="scrollGallery('gallery-3', -1)"><i class="fas fa-chevron-left"></i></div>
+        <div class="gallery-nav next" onclick="scrollGallery('gallery-3', 1)"><i class="fas fa-chevron-right"></i></div>
+        <div class="gallery-indicators" id="indicators-3"></div>
+    </div>
+    
+
+    <div class="news-content"
+         data-ru='"\u041a\u043e\u043c\u043f\u0430\u043d\u0438\u044f Youbixuan, \u043f\u043e\u0434\u0440\u0430\u0437\u0434\u0435\u043b\u0435\u043d\u0438\u0435 \u0443\u043c\u043d\u043e\u0439 \u043b\u043e\u0433\u0438\u0441\u0442\u0438\u043a\u0438 UQI Youqi, \u0434\u043e 31 \u0434\u0435\u043a\u0430\u0431\u0440\u044f 2025 \u0433\u043e\u0434\u0430 \u043f\u043e\u0441\u0442\u0430\u0432\u0438\u0442 \u043f\u0440\u043e\u043c\u044b\u0448\u043b\u0435\u043d\u043d\u044b\u0435 \u0433\u0443\u043c\u0430\u043d\u043e\u0438\u0434\u043d\u044b\u0435 \u0440\u043e\u0431\u043e\u0442\u044b \u0441\u0435\u0440\u0438\u0438 Walker S \u0441\u0442\u043e\u0438\u043c\u043e\u0441\u0442\u044c\u044e \u003cb\u003e30 \u043c\u043b\u043d \u044e\u0430\u043d\u0435\u0439\u003c/b\u003e; \u0432 \u044d\u0442\u043e\u043c \u043c\u0435\u0441\u044f\u0446\u0435 \u043f\u043e\u043b\u0443\u0447\u0435\u043d \u0437\u0430\u043a\u0430\u0437 \u043d\u0430 Walker S2 \u043d\u0430 \u0441\u0443\u043c\u043c\u0443 \u003cb\u003e250 \u043c\u043b\u043d \u044e\u0430\u043d\u0435\u0439\u003c/b\u003e, \u0441\u0443\u043c\u043c\u0430\u0440\u043d\u044b\u0439 \u043e\u0431\u044a\u0451\u043c \u043a\u043e\u043d\u0442\u0440\u0430\u043a\u0442\u043e\u0432 \u043f\u043e\u0447\u0442\u0438 \u003cb\u003e430 \u043c\u043b\u043d \u044e\u0430\u043d\u0435\u0439\u003c/b\u003e, Walker S2 \u043e\u0441\u043d\u0430\u0449\u0451\u043d \u0441\u0438\u0441\u0442\u0435\u043c\u043e\u0439 \u0433\u043e\u0440\u044f\u0447\u0435\u0439 \u0437\u0430\u043c\u0435\u043d\u044b \u0431\u0430\u0442\u0430\u0440\u0435\u0439, \u043e\u0431\u0435\u0441\u043f\u0435\u0447\u0438\u0432\u0430\u044f \u043d\u0435\u043f\u0440\u0435\u0440\u044b\u0432\u043d\u0443\u044e \u0440\u0430\u0431\u043e\u0442\u0443 7\u00d724 \u0447\u0430\u0441\u0430."'
+         data-zh='"\u4f18\u5fc5\u9009\u667a\u6167\u7269\u6d41\u5b50\u516c\u53f8UQI\u4f18\u5947\u5c06\u57282025\u5e7412\u670831\u65e5\u524d\u4ea4\u4ed8\u4ef7\u503c\u003cb\u003e3000\u4e07\u5143\u003c/b\u003e\u7684Walker S\u7cfb\u5217\u5de5\u4e1a\u4eba\u5f62\u673a\u5668\u4eba\uff1b\u672c\u6708\u5df2\u83b7\u003cb\u003e2.5\u4ebf\u5143\u003c/b\u003eWalker S2\u8ba2\u5355\uff0c\u7d2f\u8ba1\u5408\u540c\u989d\u8fd1\u003cb\u003e4.3\u4ebf\u5143\u003c/b\u003e\uff0cWalker S2\u914d\u5907\u70ed\u63d2\u62d4\u6362\u7535\u7cfb\u7edf\uff0c\u5b9e\u73b07\u00d724\u5c0f\u65f6\u8fde\u7eed\u4f5c\u4e1a\u3002"'
+         data-en='"UBTech Smart Logistics subsidiary UQI (Youqi) will deliver Walker S series industrial humanoid robots worth \u003cb\u003e30 million yuan\u003c/b\u003e before December 31, 2025; this month it has received \u003cb\u003e250 million yuan\u003c/b\u003e Walker S2 orders, with cumulative contract amount near \u003cb\u003e430 million yuan\u003c/b\u003e. Walker S2 is equipped with a hot\u2011swappable battery\u2011swap system, enabling 7\u00d724\u2011hour continuous operation."'>
+        Компания Youbixuan, подразделение умной логистики UQI Youqi, до 31 декабря 2025 года поставит промышленные гуманоидные роботы серии Walker S стоимостью <b>30 млн юаней</b>; в этом месяце получен заказ на Walker S2 на сумму <b>250 млн юаней</b>, суммарный объём контрактов почти <b>430 млн юаней</b>, Walker S2 оснащён системой горячей замены батарей, обеспечивая непрерывную работу 7×24 часа.
+        <a href="https://auto.gasgoo.com/news/202509/29I70434508C601.shtml" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u041f\u0440\u043e\u0434\u0430\u0436\u0438 SUV Genesis GV80 \u0432 \u0421\u0428\u0410 \u043f\u0440\u0435\u0432\u044b\u0441\u0438\u043b\u0438 100\u202f000 \u0435\u0434\u0438\u043d\u0438\u0446."'
+        data-zh='"\u6377\u5c3c\u8d5b\u601dGV80 SUV\u5728\u7f8e\u56fd\u7d2f\u8ba1\u9500\u91cf\u7a81\u783410\u4e07\u8f86\u3002"'
+        data-en='"Genesis GV80 SUV cumulative sales in the United States have surpassed 100,000 units."'>Продажи SUV Genesis GV80 в США превысили 100 000 единиц.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-29</span>
+    </div>
+
+    
+
+    <div class="news-content"
+         data-ru='"Hyundai \u043e\u0431\u044a\u044f\u0432\u0438\u043b\u0430, \u0447\u0442\u043e \u0435\u0451 \u0440\u043e\u0441\u043a\u043e\u0448\u043d\u044b\u0439 \u0432\u043d\u0435\u0434\u043e\u0440\u043e\u0436\u043d\u0438\u043a Genesis GV80, \u0441 2020 \u0433\u043e\u0434\u0430 \u0432\u044b\u0448\u0435\u0434\u0448\u0438\u0439 \u043d\u0430 \u0440\u044b\u043d\u043e\u043a \u0421\u0428\u0410, \u043a \u0430\u0432\u0433\u0443\u0441\u0442\u0443 2025 \u0433\u043e\u0434\u0430 \u0441\u0443\u043c\u043c\u0430\u0440\u043d\u043e \u043f\u0440\u043e\u0434\u0430\u043d \u0432 \u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u0435 \u003cb\u003e100,446\u003c/b\u003e \u0435\u0434\u0438\u043d\u0438\u0446, \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u0437\u0430 \u043f\u0435\u0440\u0432\u044b\u0435 8 \u043c\u0435\u0441\u044f\u0446\u0435\u0432 2025 \u0433\u043e\u0434\u0430 \u0432\u044b\u0440\u043e\u0441\u043b\u0438 \u043f\u043e \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u044e \u0441 \u043f\u0440\u043e\u0448\u043b\u044b\u043c \u0433\u043e\u0434\u043e\u043c \u043d\u0430 \u003cb\u003e20%\u003c/b\u003e \u0434\u043e \u003cb\u003e17,009\u003c/b\u003e \u0435\u0434\u0438\u043d\u0438\u0446, \u0441\u0440\u0435\u0434\u043d\u044f\u044f \u0446\u0435\u043d\u0430 \u0441\u0434\u0435\u043b\u043a\u0438 \u043f\u043e\u0434\u043d\u044f\u043b\u0430\u0441\u044c \u0434\u043e \u003cb\u003e64,766 \u0434\u043e\u043b\u043b\u0430\u0440\u043e\u0432\u003c/b\u003e, \u0440\u043e\u0441\u0442 \u003cb\u003e4.2%\u003c/b\u003e. \u041a\u043e\u043c\u043f\u0430\u043d\u0438\u044f \u043f\u043b\u0430\u043d\u0438\u0440\u0443\u0435\u0442 \u043a 2030 \u0433\u043e\u0434\u0443 \u0434\u043e\u0441\u0442\u0438\u0447\u044c \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u044b\u0445 \u043f\u0440\u043e\u0434\u0430\u0436 \u0432 \u043e\u0431\u044a\u0451\u043c\u0435 \u003cb\u003e350,000 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439\u003c/b\u003e \u0438 \u0443\u0432\u0435\u043b\u0438\u0447\u0438\u0442\u044c \u0434\u043e\u043b\u044e \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043f\u0440\u043e\u0438\u0437\u0432\u043e\u0434\u0441\u0442\u0432\u0430 \u0432 \u0421\u0428\u0410."'
+         data-zh='"\u73b0\u4ee3\u6c7d\u8f66\u5ba3\u5e03\uff0c\u65d7\u4e0b\u8c6a\u534eSUV\u6377\u5c3c\u8d5b\u601dGV80\u81ea2020\u5e74\u8fdb\u5165\u7f8e\u56fd\u5e02\u573a\uff0c\u81f32025\u5e748\u6708\u7d2f\u8ba1\u9500\u91cf\u5df2\u8fbe\u003cb\u003e100\uff0c446\u003c/b\u003e\u8f86\uff0c2025\u5e74\u524d8\u6708\u9500\u91cf\u540c\u6bd4\u589e\u957f\u003cb\u003e20%\u003c/b\u003e\u81f3\u003cb\u003e17\uff0c009\u003c/b\u003e\u8f86\uff0c\u5e73\u5747\u6210\u4ea4\u4ef7\u5347\u81f3\u003cb\u003e64\uff0c766\u7f8e\u5143\u003c/b\u003e\uff0c\u6da8\u5e45\u003cb\u003e4.2%\u003c/b\u003e\u3002\u516c\u53f8\u8ba1\u52122030\u5e74\u5168\u7403\u9500\u91cf\u8fbe\u003cb\u003e35\u4e07\u8f86\u003c/b\u003e\uff0c\u5e76\u5728\u7f8e\u63d0\u5347\u672c\u571f\u5316\u751f\u4ea7\u6bd4\u4f8b\u3002"'
+         data-en='"Hyundai announced that its luxury SUV Genesis GV80, which entered the U. S. market in 2020, has reached cumulative sales of \u003cb\u003e100,446\u003c/b\u003e units by August 2025. Sales in the first eight months of 2025 increased by \u003cb\u003e20%\u003c/b\u003e to \u003cb\u003e17,009\u003c/b\u003e units year\u2011over\u2011year, and the average transaction price rose to \u003cb\u003e$64,766\u003c/b\u003e, a growth of \u003cb\u003e4.2%\u003c/b\u003e. The company plans to achieve global sales of \u003cb\u003e350,000\u003c/b\u003e units by 2030 and increase the proportion of localized production in the United States."'>
+        Hyundai объявила, что её роскошный внедорожник Genesis GV80, с 2020 года вышедший на рынок США, к августу 2025 года суммарно продан в количестве <b>100,446</b> единиц, продажи за первые 8 месяцев 2025 года выросли по сравнению с прошлым годом на <b>20%</b> до <b>17,009</b> единиц, средняя цена сделки поднялась до <b>64,766 долларов</b>, рост <b>4.2%</b>. Компания планирует к 2030 году достичь глобальных продаж в объёме <b>350,000 автомобилей</b> и увеличить долю локального производства в США.
+        <a href="https://auto.gasgoo.com/news/202509/29I70434507C110.shtml" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u0421 \u043f\u0440\u0438\u0431\u043b\u0438\u0436\u0435\u043d\u0438\u0435\u043c \u043f\u0440\u0430\u0437\u0434\u043d\u0438\u043a\u0430 \u041d\u0430\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u0434\u043d\u044f \u0440\u0430\u0441\u0442\u0451\u0442 \u043f\u043e\u043f\u0443\u043b\u044f\u0440\u043d\u043e\u0441\u0442\u044c \u0430\u0432\u0442\u043e\u043f\u0443\u0442\u0435\u0448\u0435\u0441\u0442\u0432\u0438\u0439. Shenzhou Car Rental \u043e\u0442\u043a\u0440\u044b\u043b\u0430 \u0438 \u043c\u043e\u0434\u0435\u0440\u043d\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u043b\u0430 \u0434\u0432\u0430 \u043a\u0440\u0443\u043f\u043d\u044b\u0445 \u0443\u0437\u043b\u043e\u0432\u044b\u0445 \u0444\u0438\u043b\u0438\u0430\u043b\u0430 \u0432 \u041d\u0430\u043d\u044c\u043d\u0438\u043d\u0435, \u0443\u0441\u0438\u043b\u0438\u0432 \u0441\u0435\u0442\u044c \u0430\u0432\u0442\u043e\u043f\u0443\u0442\u0435\u0448\u0435\u0441\u0442\u0432\u0438\u0439 \u0432 \u043f\u0440\u043e\u0432\u0438\u043d\u0446\u0438\u0438 \u0413\u0443\u0430\u043d\u0441\u0438."'
+        data-zh='"\u56fd\u5e86\u81ea\u9a7e\u70ed\u6f6e\u5c06\u81f3 \u795e\u5dde\u79df\u8f66\u5357\u5b81\u4e24\u5927\u67a2\u7ebd\u95e8\u5e97\u5f00\u4e1a\u5347\u7ea7\u5e7f\u897f\u81ea\u9a7e\u7f51\u7edc\u3002"'
+        data-en='"A National Day self\u2011drive travel surge is approaching; Shenzhou Car Rental opens and upgrades two major hub stores in Nanning, enhancing Guangxi\u2019s self\u2011drive network."'>С приближением праздника Национального дня растёт популярность автопутешествий. Shenzhou Car Rental открыла и модернизировала два крупных узловых филиала в Наньнине, усилив сеть автопутешествий в провинции Гуанси.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-29</span>
+    </div>
+
+    
+
+    <div class="news-content"
+         data-ru='"Shenzhou Car Rental \u0443\u0441\u0438\u043b\u0438\u0432\u0430\u0435\u0442 \u043f\u0440\u0438\u0441\u0443\u0442\u0441\u0442\u0432\u0438\u0435 \u0432 \u043f\u0440\u043e\u0432\u0438\u043d\u0446\u0438\u0438 \u0413\u0443\u0430\u043d\u0441\u0438: \u043c\u0435\u0436\u0434\u0443\u043d\u0430\u0440\u043e\u0434\u043d\u044b\u0439 \u0430\u044d\u0440\u043e\u043f\u043e\u0440\u0442 \u041d\u0430\u043d\u043d\u0438\u043d \u0412\u0443 \u0421\u044e\u0439 (\u0442\u0435\u0440\u043c\u0438\u043d\u0430\u043b T2) \u0438 \u043f\u0435\u0440\u0435\u0434\u043d\u044f\u044f \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u0436\u0435\u043b\u0435\u0437\u043d\u043e\u0434\u043e\u0440\u043e\u0436\u043d\u043e\u0433\u043e \u0432\u043e\u043a\u0437\u0430\u043b\u0430 \u0411\u044d\u0439\u0445\u0430\u0439 \u043e\u0434\u043d\u043e\u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e \u043c\u043e\u0434\u0435\u0440\u043d\u0438\u0437\u0438\u0440\u043e\u0432\u0430\u043d\u044b, \u0447\u0442\u043e \u043f\u043e\u0437\u0432\u043e\u043b\u044f\u0435\u0442 \u0432\u0437\u044f\u0442\u044c \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u044c \u0432 \u0442\u0435\u0447\u0435\u043d\u0438\u0435 \u0434\u0435\u0441\u044f\u0442\u0438 \u043c\u0438\u043d\u0443\u0442 \u043f\u043e\u0441\u043b\u0435 \u0432\u044b\u0445\u043e\u0434\u0430, \u043e\u0445\u0432\u0430\u0442\u044b\u0432\u0430\u044f 14 \u0433\u043e\u0440\u043e\u0434\u043e\u0432 \u043f\u0440\u043e\u0432\u0438\u043d\u0446\u0438\u0438. \u0412 \u043f\u0435\u0440\u0438\u043e\u0434 \u043d\u0430\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043f\u0440\u0430\u0437\u0434\u043d\u0438\u043a\u0430 \u043c\u043e\u0434\u0435\u043b\u0438 \u043d\u043e\u0432\u044b\u0445 \u044d\u043d\u0435\u0440\u0433\u0438\u0439, \u0442\u0430\u043a\u0438\u0435 \u043a\u0430\u043a Wenjie M7, \u043f\u043e\u043b\u044c\u0437\u0443\u044e\u0442\u0441\u044f \u0432\u044b\u0441\u043e\u043a\u0438\u043c \u0441\u043f\u0440\u043e\u0441\u043e\u043c, \u0443\u043b\u0443\u0447\u0448\u0430\u044f \u043e\u043f\u044b\u0442 \u043f\u0443\u0442\u0435\u0448\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u0438\u043a\u043e\u0432 \u00ab\u043f\u043e\u0435\u0445\u0430\u043b \u2014 \u0438 \u043f\u043e\u0435\u0445\u0430\u043b\u00bb \u043f\u0440\u0438 \u0441\u0430\u043c\u043e\u0441\u0442\u043e\u044f\u0442\u0435\u043b\u044c\u043d\u043e\u043c \u0432\u043e\u0436\u0434\u0435\u043d\u0438\u0438."'
+         data-zh='"\u795e\u5dde\u79df\u8f66\u5728\u5e7f\u897f\u5e03\u5c40\u52a0\u5bc6\uff0c\u5357\u5b81\u5434\u5729\u56fd\u9645\u673a\u573aT2\u822a\u7ad9\u697c\u4e0e\u5317\u6d77\u706b\u8f66\u7ad9\u7ad9\u524d\u5e7f\u573a\u540c\u6b65\u5347\u7ea7\uff0c\u5b9e\u73b0\u51fa\u7ad9\u5341\u5206\u949f\u53d6\u8f66\uff0c\u8986\u76d6\u5168\u770114\u5e02\uff0c\u56fd\u5e86\u671f\u95f4\u65b0\u80fd\u6e90\u8f66\u578b\u5982\u95ee\u754cM7\u7b49\u9884\u8ba2\u706b\u7206\uff0c\u63d0\u5347\u65c5\u5ba2\u2018\u8bf4\u8d70\u5c31\u8d70\u2019\u7684\u81ea\u9a7e\u4f53\u9a8c\u3002"'
+         data-en='"Shenzhou Car Rental is intensifying its layout in Guangxi, with the Terminal 2 of Nanning Wuxu International Airport and the station front square of Beihai Railway Station being upgraded simultaneously, enabling car pickup within ten minutes of exiting, covering 14 cities across the province. During the National Day holiday, new energy vehicle models such as the Wenjie M7 were booked in a frenzy, enhancing travelers\u0027 \u201cjust go\u201d self\u2011drive experience."'>
+        Shenzhou Car Rental усиливает присутствие в провинции Гуанси: международный аэропорт Наннин Ву Сюй (терминал T2) и передняя площадь железнодорожного вокзала Бэйхай одновременно модернизированы, что позволяет взять автомобиль в течение десяти минут после выхода, охватывая 14 городов провинции. В период национального праздника модели новых энергий, такие как Wenjie M7, пользуются высоким спросом, улучшая опыт путешественников «поехал — и поехал» при самостоятельном вождении.
+        <a href="https://auto.cri.cn/20250928/377f83b5-3b80-e1ce-f4fe-301339d57d45.html" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u0410\u0440\u043a\u0444\u043e\u043a\u0441 T1 \u043d\u0430\u0447\u0430\u043b \u043f\u043e\u0441\u0442\u0430\u0432\u043a\u0438 \u0432 11 \u0433\u043e\u0440\u043e\u0434\u0430\u0445 \u043f\u043e \u0432\u0441\u0435\u0439 \u0441\u0442\u0440\u0430\u043d\u0435, \u043e\u0434\u043d\u043e\u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e \u0437\u0430\u043f\u0443\u0449\u0435\u043d\u044b \u044d\u043a\u0441\u043a\u043b\u044e\u0437\u0438\u0432\u043d\u044b\u0435 \u043f\u0440\u0438\u0432\u0438\u043b\u0435\u0433\u0438\u0438 \u0434\u043b\u044f \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u0432."'
+        data-zh='"\u6781\u72d0T1\u5168\u56fd11\u57ce\u5f00\u542f\u4ea4\u4ed8 \u8f66\u4e3b\u4e13\u5c5e\u793c\u9047\u540c\u6b65\u4e0a\u7ebf\u3002"'
+        data-en='"Arcfox T1 begins delivery in 11 cities nationwide; owner-exclusive benefits launch simultaneously."'>Аркфокс T1 начал поставки в 11 городах по всей стране, одновременно запущены эксклюзивные привилегии для владельцев.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-29</span>
+    </div>
+
+    
+
+    <div class="news-content"
+         data-ru='"\u041f\u0440\u0435\u0434\u0441\u0435\u0434\u0430\u0442\u0435\u043b\u044c \u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u044f \u0411\u044d\u0439\u0446\u0437\u0438 \u0411\u0438\u0414\u0436\u0438\u0418\u0432\u0438 \u0427\u0436\u0430\u043d \u0413\u043e\u0444\u0443 \u0438 \u0434\u0440\u0443\u0433\u0438\u0435 \u043f\u0440\u0438\u0441\u0443\u0442\u0441\u0442\u0432\u043e\u0432\u0430\u043b\u0438 \u043d\u0430 \u0446\u0435\u0440\u0435\u043c\u043e\u043d\u0438\u0438 \u043f\u0435\u0440\u0435\u0434\u0430\u0447\u0438 \u0432 \u041f\u0435\u043a\u0438\u043d\u0435, \u043b\u0438\u0447\u043d\u043e \u0432\u0440\u0443\u0447\u0438\u043b\u0438 \u043a\u043b\u044e\u0447\u0438 \u043f\u0435\u0440\u0432\u044b\u043c \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0430\u043c, \u0430 \u0442\u0430\u043a\u0436\u0435 \u043f\u043e\u0434\u0430\u0440\u0438\u043b\u0438 \u043f\u043e\u0434\u0430\u0440\u043e\u0447\u043d\u044b\u0435 \u043d\u0430\u0431\u043e\u0440\u044b, \u0446\u0432\u0435\u0442\u044b \u0438 \u043e\u0440\u0433\u0430\u043d\u0438\u0437\u043e\u0432\u0430\u043b\u0438 \u0432\u044b\u0441\u0442\u0443\u043f\u043b\u0435\u043d\u0438\u0435 \u0436\u0438\u0432\u043e\u0439 \u0433\u0440\u0443\u043f\u043f\u044b; \u0410\u0440\u043a\u0444\u043e\u043a\u0441 T1 \u043e\u0434\u043d\u043e\u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u043b \u0431\u0435\u0441\u043f\u043b\u0430\u0442\u043d\u044b\u0439 \u043e\u0441\u043c\u043e\u0442\u0440 \u043a \u0434\u0432\u043e\u0439\u043d\u044b\u043c \u043f\u0440\u0430\u0437\u0434\u043d\u0438\u043a\u0430\u043c, \u0434\u043e\u0440\u043e\u0436\u043d\u0443\u044e \u043f\u043e\u043c\u043e\u0449\u044c \u0438 \u003cb\u003e7\u00d724\u003c/b\u003e \u0442\u0435\u0445\u043d\u0438\u0447\u0435\u0441\u043a\u0443\u044e \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0443, OTA \u0431\u0443\u0434\u0435\u0442 \u0438\u043d\u0442\u0435\u0433\u0440\u0438\u0440\u043e\u0432\u0430\u0442\u044c AI\u2011\u043c\u043e\u0434\u0435\u043b\u0438 \u0411\u044d\u0439\u0446\u0437\u0438 \u0411\u0430\u0439\u043c\u043e \u0427\u0443\u0430\u043d\u0445\u0443\u044d\u0439, \u0414\u043e\u0443\u0431\u0430\u043e \u0438 \u0434\u0440\u0443\u0433\u0438\u0435, \u0443\u043b\u0443\u0447\u0448\u0430\u044f \u043e\u043f\u044b\u0442 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u044f \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u044f; \u041a\u043e\u043c\u043f\u0430\u043d\u0438\u044f \u0443\u0436\u0435 \u043e\u0442\u043a\u0440\u044b\u043b\u0430 \u003cb\u003e316\u003c/b\u003e \u043c\u0430\u0433\u0430\u0437\u0438\u043d\u043e\u0432 \u0432 \u003cb\u003e267\u003c/b\u003e \u0433\u043e\u0440\u043e\u0434\u0430\u0445 \u043f\u043e \u0432\u0441\u0435\u0439 \u0441\u0442\u0440\u0430\u043d\u0435, \u0435\u0449\u0435 143 \u043d\u0430\u0445\u043e\u0434\u044f\u0442\u0441\u044f \u0432 \u0441\u0442\u0430\u0434\u0438\u0438 \u0441\u0442\u0440\u043e\u0438\u0442\u0435\u043b\u044c\u0441\u0442\u0432\u0430, \u0443\u0441\u043a\u043e\u0440\u044f\u044f \u0442\u0435\u043c\u043f\u044b \u043f\u043e\u0441\u0442\u0430\u0432\u043e\u043a."'
+         data-zh='"\u5317\u6c7d\u65b0\u80fd\u6e90\u8463\u4e8b\u957f\u5f20\u56fd\u5bcc\u7b49\u51fa\u5e2d\u5317\u4eac\u4ea4\u4ed8\u4eea\u5f0f\uff0c\u4e3a\u9996\u6279\u8f66\u4e3b\u4eb2\u624b\u9012\u94a5\u5319\u5e76\u9001\u4e0a\u793c\u76d2\u3001\u9c9c\u82b1\u548c\u73b0\u573a\u4e50\u961f\u8868\u6f14\uff1b\u6781\u72d0T1\u540c\u6b65\u63a8\u51fa\u53cc\u8282\u514d\u8d39\u68c0\u67e5\u3001\u9053\u8def\u6551\u63f4\u53ca\u003cb\u003e7\u00d724\u003c/b\u003e\u6280\u672f\u652f\u6301\uff0cOTA\u5c06\u63a5\u5165\u5317\u6c7d\u767e\u6a21\u521b\u6c47\u3001\u8c46\u5305\u7b49AI\u5927\u6a21\u578b\uff0c\u63d0\u5347\u7528\u8f66\u4f53\u9a8c\uff1b\u516c\u53f8\u5df2\u5728\u5168\u56fd\u003cb\u003e267\u003c/b\u003e\u5ea7\u57ce\u5e02\u8bbe\u7acb\u003cb\u003e316\u003c/b\u003e\u5bb6\u95e8\u5e97\uff0c\u53e6\u6709\u003cb\u003e143\u003c/b\u003e\u5bb6\u5728\u5efa\uff0c\u52a0\u901f\u4ea4\u4ed8\u8282\u594f\u3002"'
+         data-en='"BAIC BJEV Chairman Zhang Guofu and others attended the Beijing delivery ceremony, personally handing keys to the first batch of owners and presenting gift boxes, flowers, and a live band performance; Arcfox T1 simultaneously launched double\u2011festival free inspections, road rescue, and \u003cb\u003e7\u00d724\u003c/b\u003e technical support, with OTA to integrate BAIC Baimo Chuanghui, Doubao and other AI large models, enhancing the vehicle experience; The company has established \u003cb\u003e316\u003c/b\u003e stores in \u003cb\u003e267\u003c/b\u003e cities nationwide, with another \u003cb\u003e143\u003c/b\u003e under construction, accelerating the delivery pace."'>
+        Председатель правления Бэйцзи БиДжиИви Чжан Гофу и другие присутствовали на церемонии передачи в Пекине, лично вручили ключи первым владельцам, а также подарили подарочные наборы, цветы и организовали выступление живой группы; Аркфокс T1 одновременно запустил бесплатный осмотр к двойным праздникам, дорожную помощь и <b>7×24</b> техническую поддержку, OTA будет интегрировать AI‑модели Бэйцзи Баймо Чуанхуэй, Доубао и другие, улучшая опыт использования автомобиля; Компания уже открыла <b>316</b> магазинов в <b>267</b> городах по всей стране, еще 143 находятся в стадии строительства, ускоряя темпы поставок.
+        <a href="https://news.yiche.com/zonghexinwen/20250929/09103989917.html" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"Zhu Jiangming \u0438\u0437 \u041b\u0438\u043f\u043c\u043e\u0442\u043e\u0440 \u043e\u0442\u0440\u0435\u0430\u0433\u0438\u0440\u043e\u0432\u0430\u043b \u043d\u0430 \u043e\u0442\u043c\u0435\u043d\u0443 \u043f\u0440\u0438\u043a\u0430\u0437\u0430 \u043e \u0432\u044b\u0441\u043e\u0442\u043d\u044b\u0445 \u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u044f\u0445; \u0440\u0430\u0441\u043a\u0440\u044b\u0442\u043e, \u0447\u0442\u043e Dreame \u043f\u043e\u043b\u0443\u0447\u0438\u043b \u0437\u0430\u043a\u0430\u0437\u044b \u043d\u0430 \u0441\u0443\u043c\u043c\u0443 \u0431\u043e\u043b\u0435\u0435 150 \u043c\u043b\u0440\u0434 \u044e\u0430\u043d\u0435\u0439."'
+        data-zh='"\u96f6\u8dd1\u6731\u6c5f\u660e\u56de\u5e94\u9650\u9ad8\u4ee4\u89e3\u9664\uff1b\u66dd\u8ffd\u89c5\u6c7d\u8f66\u83b7\u8d85150\u4ebf\u5143\u8ba2\u5355\u3002"'
+        data-en='"Leapmotor\u0027s Zhu Jiangming responds to the lifting of the height restriction order; reports say Dreame has secured orders exceeding 15\u202fbillion yuan."'>Zhu Jiangming из Липмотор отреагировал на отмену приказа о высотных ограничениях; раскрыто, что Dreame получил заказы на сумму более 150 млрд юаней.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-28</span>
+    </div>
+
+    
+
+    <div class="news-content"
+         data-ru='"\u041d\u0430 \u043f\u0435\u0440\u0432\u043e\u0439 \u043a\u043e\u043d\u0444\u0435\u0440\u0435\u043d\u0446\u0438\u0438 \u0441\u0442\u0440\u0430\u0442\u0435\u0433\u0438\u0447\u0435\u0441\u043a\u0438\u0445 \u043f\u0430\u0440\u0442\u043d\u0451\u0440\u043e\u0432, \u043f\u0440\u043e\u0448\u0435\u0434\u0448\u0435\u0439 28\u202f\u0441\u0435\u043d\u0442\u044f\u0431\u0440\u044f, \u043a\u043e\u043c\u043f\u0430\u043d\u0438\u044f Dreame \u043e\u0431\u044a\u044f\u0432\u0438\u043b\u0430 \u043e \u043f\u043e\u0434\u043f\u0438\u0441\u0430\u043d\u0438\u0438 \u0437\u0430\u0440\u0443\u0431\u0435\u0436\u043d\u044b\u0445 \u0437\u0430\u043a\u0430\u0437\u043e\u0432 \u043d\u0430 \u0441\u0443\u043c\u043c\u0443 \u0431\u043e\u043b\u0435\u0435 150\u202f\u043c\u043b\u0440\u0434 \u044e\u0430\u043d\u0435\u0439; \u043d\u0430 \u043c\u0435\u0440\u043e\u043f\u0440\u0438\u044f\u0442\u0438\u0438 \u043f\u0440\u0438\u0441\u0443\u0442\u0441\u0442\u0432\u043e\u0432\u0430\u043b\u0438 54\u202f\u0434\u0438\u043b\u0435\u0440\u0430 \u0438\u0437 22\u202f\u0441\u0442\u0440\u0430\u043d. \u041a\u043e\u043c\u043f\u0430\u043d\u0438\u044f \u043f\u043b\u0430\u043d\u0438\u0440\u0443\u0435\u0442 \u0441 \u043f\u043e\u043c\u043e\u0449\u044c\u044e \u043c\u043e\u0434\u0435\u043b\u0438 \u00ab\u042d\u043a\u043e\u2011\u0446\u0435\u043f\u043e\u0447\u043a\u0430+\u00bb \u0431\u044b\u0441\u0442\u0440\u043e \u0440\u0430\u0437\u0432\u0438\u0432\u0430\u0442\u044c \u0434\u0438\u043b\u0435\u0440\u0441\u043a\u0443\u044e \u0441\u0435\u0442\u044c \u0432 200\u202f\u0441\u0442\u0440\u0430\u043d\u0430\u0445 \u0438 \u0440\u0435\u0433\u0438\u043e\u043d\u0430\u0445 \u043c\u0438\u0440\u0430, \u0443\u0441\u0438\u043b\u0438\u0432\u0430\u044f \u043f\u0440\u043e\u043d\u0438\u043a\u043d\u043e\u0432\u0435\u043d\u0438\u0435 \u043d\u0430 \u0437\u0430\u0440\u0443\u0431\u0435\u0436\u043d\u044b\u0435 \u0440\u044b\u043d\u043a\u0438."'
+         data-zh='"\u57289\u670828\u65e5\u7684\u9996\u5c4a\u6218\u7565\u5408\u4f5c\u4f19\u4f34\u5927\u4f1a\u4e0a\uff0c\u8ffd\u89c5\u6c7d\u8f66\u516c\u5e03\u5df2\u7b7e\u8ba2\u8d85150\u4ebf\u5143\u7684\u6d77\u5916\u8ba2\u5355\uff0c\u73b0\u573a\u6709\u6765\u81ea22\u4e2a\u56fd\u5bb6\u768454\u5bb6\u7ecf\u9500\u5546\u3002\u516c\u53f8\u5c06\u901a\u8fc7\u201c\u751f\u6001\u94fe+\u201d\u6a21\u5f0f\uff0c\u5feb\u901f\u5728\u5168\u7403200\u4e2a\u56fd\u5bb6\u548c\u5730\u533a\u5e03\u5c40\u7ecf\u9500\u7f51\u7edc\uff0c\u5f3a\u5316\u6d77\u5916\u5e02\u573a\u6e17\u900f\u3002"'
+         data-en='"At the inaugural Strategic Partner Conference on September 28, Dreame announced that it has signed overseas orders exceeding 15\u202fbillion yuan, with 54 dealers from 22 countries present at the event. The company will rapidly establish a dealer network in 200 countries and regions worldwide through its \"Eco\u2011chain+\" model, strengthening penetration of overseas markets."'>
+        На первой конференции стратегических партнёров, прошедшей 28 сентября, компания Dreame объявила о подписании зарубежных заказов на сумму более 150 млрд юаней; на мероприятии присутствовали 54 дилера из 22 стран. Компания планирует с помощью модели «Эко‑цепочка+» быстро развивать дилерскую сеть в 200 странах и регионах мира, усиливая проникновение на зарубежные рынки.
+        <a href="https://auto.gasgoo.com/news/202509/29I70434472C109.shtml" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u041f\u043e\u0434 \u0432\u043e\u0437\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0435\u043c \u0440\u0435\u0437\u043a\u043e\u0433\u043e \u0440\u043e\u0441\u0442\u0430 \u043f\u0440\u043e\u0434\u0430\u0436 \u044d\u043b\u0435\u043a\u0442\u0440\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439 \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u043d\u043e\u0432\u044b\u0445 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439 \u0432 \u0421\u0428\u0410 \u0432 III \u043a\u0432\u0430\u0440\u0442\u0430\u043b\u0435, \u043a\u0430\u043a \u043e\u0436\u0438\u0434\u0430\u0435\u0442\u0441\u044f, \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u0442\u0441\u044f \u043d\u0430 \u0441\u0442\u0430\u0431\u0438\u043b\u044c\u043d\u043e\u043c \u0443\u0440\u043e\u0432\u043d\u0435."'
+        data-zh='"\u53d7\u7535\u52a8\u6c7d\u8f66\u9500\u91cf\u6fc0\u589e\u63d0\u632f\uff0c\u7f8e\u56fdQ3\u65b0\u8f66\u9500\u91cf\u6709\u671b\u7ef4\u6301\u7a33\u5065\u3002"'
+        data-en='"Boosted by a surge in electric vehicle sales, United States Q3 new car sales are expected to remain steady."'>Под воздействием резкого роста продаж электромобилей продажи новых автомобилей в США в III квартале, как ожидается, сохранятся на стабильном уровне.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-28</span>
+    </div>
+
+    
+    <div class="image-gallery-container">
+        <div class="image-gallery" id="gallery-8">
+            
+            <div class="image-container">
+                <img src="https://imagecn.gasgoo.com/moblogo/News/UEditor/image/20250928/6389468507064450786455596.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+        </div>
+        <div class="gallery-nav prev" onclick="scrollGallery('gallery-8', -1)"><i class="fas fa-chevron-left"></i></div>
+        <div class="gallery-nav next" onclick="scrollGallery('gallery-8', 1)"><i class="fas fa-chevron-right"></i></div>
+        <div class="gallery-indicators" id="indicators-8"></div>
+    </div>
+    
+
+    <div class="news-content"
+         data-ru='"\u0421\u043e\u0433\u043b\u0430\u0441\u043d\u043e \u0441\u043e\u043e\u0431\u0449\u0435\u043d\u0438\u044f\u043c \u0438\u043d\u043e\u0441\u0442\u0440\u0430\u043d\u043d\u044b\u0445 \u0421\u041c\u0418, \u0432 \u0442\u0440\u0435\u0442\u044c\u0435\u043c \u043a\u0432\u0430\u0440\u0442\u0430\u043b\u0435 2025 \u0433\u043e\u0434\u0430 \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u043d\u043e\u0432\u044b\u0445 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439 \u0432 \u0421\u0428\u0410, \u043f\u043e\u0434\u0441\u0442\u0435\u0433\u043d\u0443\u0442\u044b\u0435 \u043f\u0440\u0438\u0431\u043b\u0438\u0436\u0435\u043d\u0438\u0435\u043c \u043e\u043a\u043e\u043d\u0447\u0430\u043d\u0438\u044f \u043d\u0430\u043b\u043e\u0433\u043e\u0432\u044b\u0445 \u043b\u044c\u0433\u043e\u0442, \u0432\u044b\u0440\u043e\u0441\u043b\u0438: \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u0447\u0438\u0441\u0442\u043e \u044d\u043b\u0435\u043a\u0442\u0440\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439 \u0443\u0432\u0435\u043b\u0438\u0447\u0438\u043b\u0438\u0441\u044c \u0432 \u0433\u043e\u0434\u043e\u0432\u043e\u043c \u0438\u0441\u0447\u0438\u0441\u043b\u0435\u043d\u0438\u0438 \u003cb\u003e21%\u003c/b\u003e \u0434\u043e \u043f\u0440\u0438\u043c\u0435\u0440\u043d\u043e \u003cb\u003e410\u202f000 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439\u003c/b\u003e, \u0447\u0442\u043e \u0441\u043e\u0441\u0442\u0430\u0432\u043b\u044f\u0435\u0442 \u043e\u043a\u043e\u043b\u043e \u003cb\u003e10%\u003c/b\u003e. \u041e\u0434\u043d\u0430\u043a\u043e \u0430\u043d\u0430\u043b\u0438\u0442\u0438\u043a\u0438 \u043e\u0442\u043c\u0435\u0447\u0430\u044e\u0442, \u0447\u0442\u043e \u043e\u0442\u043c\u0435\u043d\u0430 \u043d\u0430\u043b\u043e\u0433\u043e\u0432\u044b\u0445 \u043b\u044c\u0433\u043e\u0442, \u0438\u043d\u0444\u043b\u044f\u0446\u0438\u044f \u0438 \u0441\u043e\u043a\u0440\u0430\u0449\u0435\u043d\u0438\u0435 \u0437\u0430\u043f\u0430\u0441\u043e\u0432 \u043f\u0440\u0438\u0432\u0435\u0434\u0443\u0442 \u043a \u0442\u043e\u043c\u0443, \u0447\u0442\u043e \u0432 \u0447\u0435\u0442\u0432\u0435\u0440\u0442\u043e\u043c \u043a\u0432\u0430\u0440\u0442\u0430\u043b\u0435 \u043f\u043e\u043a\u0430\u0437\u0430\u0442\u0435\u043b\u044c SAAR \u0443\u043f\u0430\u0434\u0435\u0442 \u0441 \u003cb\u003e16\u202f200\u202f000\u003c/b\u003e, \u0430 \u0433\u043e\u0434\u043e\u0432\u044b\u0435 \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u043c\u043e\u0433\u0443\u0442 \u043e\u043a\u0430\u0437\u0430\u0442\u044c\u0441\u044f \u043d\u0435\u043c\u043d\u043e\u0433\u043e \u043d\u0438\u0436\u0435 \u043e\u0436\u0438\u0434\u0430\u0435\u043c\u043e\u0433\u043e."'
+         data-zh='"\u5916\u5a92\u62a5\u9053\u663e\u793a\uff0c2025\u5e74\u7b2c\u4e09\u5b63\u5ea6\u7f8e\u56fd\u65b0\u8f66\u9500\u91cf\u53d7\u7a0e\u6536\u62b5\u514d\u4e34\u8fd1\u5931\u6548\u523a\u6fc0\uff0c\u7eaf\u7535\u52a8\u6c7d\u8f66\u9500\u91cf\u540c\u6bd4\u589e\u957f\u003cb\u003e21%\u003c/b\u003e\u81f3\u7ea6\u003cb\u003e41\u4e07\u8f86\u003c/b\u003e\uff0c\u5360\u6bd4\u7ea6\u003cb\u003e10%\u003c/b\u003e\u3002\u4f46\u5206\u6790\u5e08\u6307\u51fa\uff0c\u7a0e\u6536\u4f18\u60e0\u53d6\u6d88\u3001\u901a\u80c0\u53ca\u5e93\u5b58\u7d27\u7f29\u5c06\u5bfc\u81f4\u7b2c\u56db\u5b63\u5ea6SAAR\u4ece\u003cb\u003e1\uff0c620\u4e07\u8f86\u003c/b\u003e\u56de\u843d\uff0c\u5168\u5e74\u9500\u91cf\u6216\u7565\u4f4e\u4e8e\u9884\u671f\u3002"'
+         data-en='"Foreign media reports show that in the third quarter of 2025, U. S. new\u2011vehicle sales were stimulated by the impending expiration of tax credits, and pure\u2011electric vehicle sales grew year\u2011over\u2011year \u003cb\u003e21%\u003c/b\u003e to about \u003cb\u003e410,000 units\u003c/b\u003e, accounting for roughly \u003cb\u003e10%\u003c/b\u003e. However, analysts note that the removal of tax incentives, inflation and tightening inventories will cause the fourth\u2011quarter SAAR to fall back from \u003cb\u003e16.2 million units\u003c/b\u003e, and full\u2011year sales may be slightly below expectations."'>
+        Согласно сообщениям иностранных СМИ, в третьем квартале 2025 года продажи новых автомобилей в США, подстегнутые приближением окончания налоговых льгот, выросли: продажи чисто электромобилей увеличились в годовом исчислении <b>21%</b> до примерно <b>410 000 автомобилей</b>, что составляет около <b>10%</b>. Однако аналитики отмечают, что отмена налоговых льгот, инфляция и сокращение запасов приведут к тому, что в четвертом квартале показатель SAAR упадет с <b>16 200 000</b>, а годовые продажи могут оказаться немного ниже ожидаемого.
+        <a href="https://auto.gasgoo.com/news/202509/28I70434481C110.shtml" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u0412 \u0422\u0430\u0438\u043b\u0430\u043d\u0434\u0435 \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u043d\u043e\u0432\u044b\u0445 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439 \u0432 \u0430\u0432\u0433\u0443\u0441\u0442\u0435 \u0432\u044b\u0440\u043e\u0441\u043b\u0438 \u0431\u043e\u043b\u0435\u0435 \u0447\u0435\u043c \u043d\u0430 5\u202f% \u043f\u043e \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u044e \u0441 \u043f\u0440\u043e\u0448\u043b\u044b\u043c \u0433\u043e\u0434\u043e\u043c."'
+        data-zh='"\u6cf0\u56fd8\u6708\u65b0\u8f66\u9500\u91cf\u540c\u6bd4\u589e\u957f\u903e5%\u3002"'
+        data-en='"Thailand\u0027s new car sales in August grew by over 5% year-on-year."'>В Таиланде продажи новых автомобилей в августе выросли более чем на 5 % по сравнению с прошлым годом.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-28</span>
+    </div>
+
+    
+
+    <div class="news-content"
+         data-ru='"\u0412 \u0422\u0430\u0438\u043b\u0430\u043d\u0434\u0435 \u0432 \u0430\u0432\u0433\u0443\u0441\u0442\u0435 \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u043d\u043e\u0432\u044b\u0445 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439 \u0434\u043e\u0441\u0442\u0438\u0433\u043b\u0438 \u003cb\u003e47,622\u003c/b\u003e \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439, \u0447\u0442\u043e \u0431\u043e\u043b\u0435\u0435 \u0447\u0435\u043c \u043d\u0430 \u003cb\u003e5%\u003c/b\u003e \u0432\u044b\u0448\u0435, \u0447\u0435\u043c \u0432 \u0430\u043d\u0430\u043b\u043e\u0433\u0438\u0447\u043d\u044b\u0439 \u043f\u0435\u0440\u0438\u043e\u0434 \u043f\u0440\u043e\u0448\u043b\u043e\u0433\u043e \u0433\u043e\u0434\u0430; \u0441\u0440\u0435\u0434\u0438 \u043d\u0438\u0445 \u043f\u0440\u043e\u0434\u0430\u0436\u0438 \u0447\u0438\u0441\u0442\u043e \u044d\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u0435\u0441\u043a\u0438\u0445 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439 \u0441\u043e\u0441\u0442\u0430\u0432\u0438\u043b\u0438 \u003cb\u003e9,246\u003c/b\u003e \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439, \u0440\u043e\u0441\u0442 \u043f\u043e \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u044e \u0441 \u043f\u0440\u043e\u0448\u043b\u044b\u043c \u0433\u043e\u0434\u043e\u043c \u0441\u043e\u0441\u0442\u0430\u0432\u0438\u043b \u003cb\u003e27%\u003c/b\u003e. \u0420\u043e\u0441\u0442 \u043e\u0431\u0443\u0441\u043b\u043e\u0432\u043b\u0435\u043d \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435\u043c \u043c\u0435\u0441\u0442\u043d\u043e\u0439 \u044d\u043a\u043e\u043d\u043e\u043c\u0438\u043a\u0438, \u0441\u043d\u0438\u0436\u0435\u043d\u0438\u0435\u043c \u0431\u0430\u0437\u043e\u0432\u043e\u0439 \u043f\u0440\u043e\u0446\u0435\u043d\u0442\u043d\u043e\u0439 \u0441\u0442\u0430\u0432\u043a\u0438 \u0438 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u043e\u0439 \u0441\u0442\u0438\u043c\u0443\u043b\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f \u0438\u043d\u0432\u0435\u0441\u0442\u0438\u0446\u0438\u0439 EV3.0 \u043a\u0438\u0442\u0430\u0439\u0441\u043a\u0438\u0445 \u0430\u0432\u0442\u043e\u043f\u0440\u043e\u0438\u0437\u0432\u043e\u0434\u0438\u0442\u0435\u043b\u0435\u0439 \u0432 \u0422\u0430\u0438\u043b\u0430\u043d\u0434\u0435."'
+         data-zh='"\u6cf0\u56fd8\u6708\u65b0\u8f66\u9500\u91cf\u8fbe\u003cb\u003e47\uff0c622\u003c/b\u003e\u8f86\uff0c\u8f83\u53bb\u5e74\u540c\u671f\u589e\u957f\u903e\u003cb\u003e5%\u003c/b\u003e\uff0c\u5176\u4e2d\u7eaf\u7535\u52a8\u6c7d\u8f66\u9500\u91cf\u003cb\u003e9\uff0c246\u003c/b\u003e\u8f86\uff0c\u540c\u6bd4\u589e\u957f\u003cb\u003e27%\u003c/b\u003e\u3002\u589e\u957f\u5f97\u76ca\u4e8e\u672c\u5730\u7ecf\u6d4e\u56de\u6696\u3001\u57fa\u51c6\u5229\u7387\u4e0b\u8c03\u4ee5\u53ca\u4e2d\u56fd\u8f66\u4f01\u5728\u6cf0\u56fd\u7684EV3.0\u6295\u8d44\u6fc0\u52b1\u8ba1\u5212\u3002"'
+         data-en='"Thailand\u0027s new car sales in August reached \u003cb\u003e47,622\u003c/b\u003e units, up more than \u003cb\u003e5%\u003c/b\u003e compared with the same period last year, of which pure electric vehicle sales were \u003cb\u003e9,246\u003c/b\u003e units, a year\u2011on\u2011year increase of \u003cb\u003e27%\u003c/b\u003e. The growth was driven by a rebound in the local economy, a reduction in the benchmark interest rate, and Chinese automakers\u0027 EV3.0 investment incentive program in Thailand."'>
+        В Таиланде в августе продажи новых автомобилей достигли <b>47,622</b> автомобилей, что более чем на <b>5%</b> выше, чем в аналогичный период прошлого года; среди них продажи чисто электрических автомобилей составили <b>9,246</b> автомобилей, рост по сравнению с прошлым годом составил <b>27%</b>. Рост обусловлен восстановлением местной экономики, снижением базовой процентной ставки и программой стимулирования инвестиций EV3.0 китайских автопроизводителей в Таиланде.
+        <a href="https://auto.gasgoo.com/news/202509/28I70434480C110.shtml" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u0417\u0430 \u0432\u044b\u0431\u043e\u0440\u043e\u043c 470\u202f000 \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u0432 \u0441\u0442\u043e\u0438\u0442: Tank 300 \u043f\u0435\u0440\u0435\u043e\u043f\u0440\u0435\u0434\u0435\u043b\u044f\u0435\u0442 \u044d\u0442\u0430\u043b\u043e\u043d \u0446\u0435\u043d\u043d\u043e\u0441\u0442\u0438 \u043a\u0438\u0442\u0430\u0439\u0441\u043a\u043e\u0433\u043e \u0432\u043d\u0435\u0434\u043e\u0440\u043e\u0436\u043d\u0438\u043a\u0430 \u0431\u043b\u0430\u0433\u043e\u0434\u0430\u0440\u044f \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0443."'
+        data-zh='"47\u4e07\u8f66\u4e3b\u7684\u9009\u62e9\u80cc\u540e\uff1a\u5766\u514b300\u4ee5\u8d28\u91cf\u91cd\u5851\u4e2d\u56fd\u8d8a\u91ce\u4ef7\u503c\u6807\u6746\u3002"'
+        data-en='"Behind the Choice of 470,000 Car Owners: Tank 300 Redefines the Benchmark of Chinese Off\u2011road Value Through Quality."'>За выбором 470 000 владельцев стоит: Tank 300 переопределяет эталон ценности китайского внедорожника благодаря качеству.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-28</span>
+    </div>
+
+    
+    <div class="image-gallery-container">
+        <div class="image-gallery" id="gallery-10">
+            
+            <div class="image-container">
+                <img src="https://v2.cri.cn/457cf964-6cdb-48dd-abb5-99c288086661/image/3cefb2508a834156a76312ddeb08b7d8.800x450.750x2147483647.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+            <div class="image-container">
+                <img src="https://v2.cri.cn/457cf964-6cdb-48dd-abb5-99c288086661/image/5c8f52cbb32f43eeaad30b9dae296a46.800x533.750x2147483647.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+            <div class="image-container">
+                <img src="https://v2.cri.cn/457cf964-6cdb-48dd-abb5-99c288086661/image/825b69717b0a41dea1a0cea4648f8010.800x533.750x2147483647.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+        </div>
+        <div class="gallery-nav prev" onclick="scrollGallery('gallery-10', -1)"><i class="fas fa-chevron-left"></i></div>
+        <div class="gallery-nav next" onclick="scrollGallery('gallery-10', 1)"><i class="fas fa-chevron-right"></i></div>
+        <div class="gallery-indicators" id="indicators-10"></div>
+    </div>
+    
+
+    <div class="news-content"
+         data-ru='"\u0412 \u0441\u0435\u043d\u0442\u044f\u0431\u0440\u0435\u202f2025\u202f\u0433\u043e\u0434\u0430 \u043c\u043e\u0434\u0435\u043b\u044c Tank\u202f300 \u0437\u0430\u043d\u044f\u043b\u0430 \u043f\u0435\u0440\u0432\u043e\u0435 \u043c\u0435\u0441\u0442\u043e \u043f\u043e \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0443 \u0441\u0440\u0435\u0434\u0438 \u043e\u0442\u0435\u0447\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0445 SUV \u0432 \u0441\u043f\u0438\u0441\u043a\u0435 \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0430 AQR, \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043d\u043e\u043c Car Quality Network \u0441\u043e\u0432\u043c\u0435\u0441\u0442\u043d\u043e \u0441 Kairui Saichi. \u0413\u0440\u0435\u0439\u0442 \u0412\u043e\u043b\u043b \u041c\u043e\u0442\u043e\u0440\u0441, \u043f\u0440\u043e\u0432\u0435\u0434\u044f 481 \u043f\u0443\u043d\u043a\u0442 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u044f \u043d\u0430\u0434\u0451\u0436\u043d\u043e\u0441\u0442\u0438, \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0432 \u043a\u0443\u0437\u043e\u0432 \u0438\u0437 70\u202f% \u0432\u044b\u0441\u043e\u043a\u043e\u043f\u0440\u043e\u0447\u043d\u043e\u0439 \u0441\u0442\u0430\u043b\u0438 \u0438 \u043a\u0430\u043b\u0438\u0431\u0440\u043e\u0432\u043a\u0443 \u0434\u043b\u044f \u044d\u043a\u0441\u0442\u0440\u0435\u043c\u0430\u043b\u044c\u043d\u044b\u0445 \u043a\u043b\u0438\u043c\u0430\u0442\u0438\u0447\u0435\u0441\u043a\u0438\u0445 \u0443\u0441\u043b\u043e\u0432\u0438\u0439, \u043f\u0440\u0435\u0432\u044b\u0441\u0438\u043b \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u044b\u0439 \u0441\u043e\u0432\u043e\u043a\u0443\u043f\u043d\u044b\u0439 \u043e\u0431\u044a\u0451\u043c \u043f\u0440\u043e\u0434\u0430\u0436 \u0431\u043e\u043b\u0435\u0435 470\u202f000 \u0435\u0434\u0438\u043d\u0438\u0446, \u0430 \u0441\u0443\u043c\u043c\u0430\u0440\u043d\u044b\u0439 \u043f\u0440\u043e\u0431\u0435\u0433 \u0432\u043b\u0430\u0434\u0435\u043b\u044c\u0446\u0435\u0432 \u0441\u043e\u0441\u0442\u0430\u0432\u0438\u043b 172\u202f\u043c\u043b\u0440\u0434\u202f\u043a\u043c, \u0447\u0442\u043e \u043f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0430\u0435\u0442 \u0435\u0433\u043e \u0432\u044b\u0441\u043e\u043a\u0443\u044e \u043d\u0430\u0434\u0451\u0436\u043d\u043e\u0441\u0442\u044c \u0438 \u0432\u043b\u0438\u044f\u043d\u0438\u0435 \u0431\u0440\u0435\u043d\u0434\u0430 \u043d\u0430 \u0440\u044b\u043d\u043a\u0435 \u0432\u043d\u0435\u0434\u043e\u0440\u043e\u0436\u043d\u0438\u043a\u043e\u0432."'
+         data-zh='"2025\u5e749\u6708\uff0c\u5766\u514b300\u5728\u8f66\u8d28\u7f51\u4e0e\u51ef\u777f\u8d5b\u9a70\u53d1\u5e03\u7684AQR\u8d28\u91cf\u699c\u5355\u4e2d\u8363\u83b7\u81ea\u4e3bSUV\u8d28\u91cf\u7b2c\u4e00\u3002\u957f\u57ce\u6c7d\u8f66\u901a\u8fc7481\u9879\u53ef\u9760\u6027\u5347\u7ea7\u300170%\u9ad8\u5f3a\u5ea6\u94a2\u8f66\u8eab\u53ca\u6781\u7aef\u6c14\u5019\u6807\u5b9a\uff0c\u4f7f\u5176\u5168\u7403\u7d2f\u8ba1\u9500\u91cf\u7a81\u783447\u4e07\u8f86\uff0c\u8f66\u4e3b\u7d2f\u8ba1\u884c\u9a76\u91cc\u7a0b1720\u4ebf\u516c\u91cc\uff0c\u9a8c\u8bc1\u4e86\u5176\u5728\u8d8a\u91ce\u5e02\u573a\u7684\u9ad8\u53ef\u9760\u6027\u548c\u54c1\u724c\u5f71\u54cd\u529b\u3002"'
+         data-en='"In September 2025, the Tank 300 ranked first among domestic SUVs in the AQR quality ranking released by Car Quality Network and Kairui Saichi. Great Wall Motors, through 481 reliability upgrades, a body comprising 70% high\u2011strength steel, and extreme\u2011climate calibration, has pushed its global cumulative sales past 470,000 units, with owners accumulating a total mileage of 172\u202fbillion kilometres, confirming its high reliability and brand influence in the off\u2011road market."'>
+        В сентябре 2025 года модель Tank 300 заняла первое место по качеству среди отечественных SUV в списке качества AQR, опубликованном Car Quality Network совместно с Kairui Saichi. Грейт Волл Моторс, проведя 481 пункт обновления надёжности, использовав кузов из 70 % высокопрочной стали и калибровку для экстремальных климатических условий, превысил глобальный совокупный объём продаж более 470 000 единиц, а суммарный пробег владельцев составил 172 млрд км, что подтверждает его высокую надёжность и влияние бренда на рынке внедорожников.
+        <a href="https://auto.cri.cn/20250928/4375cfd5-7fef-e0cc-e8e3-f1648e35f61f.html" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u0411\u0435\u043d\u0437\u0438\u043d \u0438 \u044d\u043b\u0435\u043a\u0442\u0440\u043e\u043c\u043e\u0431\u0438\u043b\u0438 \u2014 \u043e\u0434\u0438\u043d\u0430\u043a\u043e\u0432\u044b: Passat Pro \u0438 ID. 3 \u043e\u0442 SAIC Volkswagen \u043e\u0431\u0430 \u043f\u043e\u043b\u0443\u0447\u0438\u043b\u0438 \u0437\u0432\u0430\u043d\u0438\u0435 \u00ab\u041b\u0443\u0447\u0448\u0438\u0439 \u043f\u043e \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0443 \u0438 \u043e\u043f\u044b\u0442\u0443\u00bb."'
+        data-zh='"\u6cb9\u7535\u540c\u8d28 \u4e0a\u6c7d\u5927\u4f17\u5e15\u8428\u7279Pro\u548cID.3\u53cc\u83b7\u201c\u8d28\u91cf\u4f53\u9a8c\u7b2c\u4e00\u540d\u201d\u3002"'
+        data-en='"Fuel-Electric Parity: SAIC Volkswagen Passat Pro and ID. 3 both win \"Number One in Quality Experience\"."'>Бензин и электромобили — одинаковы: Passat Pro и ID. 3 от SAIC Volkswagen оба получили звание «Лучший по качеству и опыту».</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-28</span>
+    </div>
+
+    
+    <div class="image-gallery-container">
+        <div class="image-gallery" id="gallery-11">
+            
+            <div class="image-container">
+                <img src="https://v2.cri.cn/457cf964-6cdb-48dd-abb5-99c288086661/image/eebb00e3b0814737bd13a895792bced5.800x450.750x2147483647.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+            <div class="image-container">
+                <img src="https://v2.cri.cn/457cf964-6cdb-48dd-abb5-99c288086661/image/2ec101015c8544a08ed4a68efbc2030d.800x450.750x2147483647.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+            <div class="image-container">
+                <img src="https://v2.cri.cn/457cf964-6cdb-48dd-abb5-99c288086661/image/8abd324c4d004d2e96106ca62ecbb593.800x393.750x2147483647.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+        </div>
+        <div class="gallery-nav prev" onclick="scrollGallery('gallery-11', -1)"><i class="fas fa-chevron-left"></i></div>
+        <div class="gallery-nav next" onclick="scrollGallery('gallery-11', 1)"><i class="fas fa-chevron-right"></i></div>
+        <div class="gallery-indicators" id="indicators-11"></div>
+    </div>
+    
+
+    <div class="news-content"
+         data-ru='"25 \u0441\u0435\u043d\u0442\u044f\u0431\u0440\u044f 2025 \u0433\u043e\u0434\u0430 \u0432 \u041f\u0435\u043a\u0438\u043d\u0435 \u0431\u044b\u043b\u0438 \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u044b \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u044b \u0438\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u043d\u0438\u044f \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0430 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u044c\u043d\u043e\u0439 \u043f\u0440\u043e\u0434\u0443\u043a\u0446\u0438\u0438 \u041a\u0438\u0442\u0430\u044f (AQR). SAIC Volkswagen Passat Pro, \u0431\u043b\u0430\u0433\u043e\u0434\u0430\u0440\u044f \u0434\u0432\u0438\u0433\u0430\u0442\u0435\u043b\u044e 380\u202fTSI \u0438 \u043f\u043e\u043b\u043d\u043e\u043c\u0443 \u043d\u0430\u0431\u043e\u0440\u0443 \u0438\u0437 10 \u043f\u043e\u0434\u0443\u0448\u0435\u043a \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438 \u0432\u043e \u0432\u0441\u0435\u0445 \u043a\u043e\u043c\u043f\u043b\u0435\u043a\u0442\u0430\u0446\u0438\u044f\u0445, \u0437\u0430\u043d\u044f\u043b \u043f\u0435\u0440\u0432\u043e\u0435 \u043c\u0435\u0441\u0442\u043e \u0432 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438 \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0430 \u044d\u043a\u0441\u043f\u043b\u0443\u0430\u0442\u0430\u0446\u0438\u0438 \u0441\u0435\u0434\u0430\u043d\u043e\u0432 \u0441\u043e\u0432\u043c\u0435\u0441\u0442\u043d\u044b\u0445 \u043f\u0440\u0435\u0434\u043f\u0440\u0438\u044f\u0442\u0438\u0439; ID. 3, \u0431\u043b\u0430\u0433\u043e\u0434\u0430\u0440\u044f 338 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430\u043c \u0431\u0435\u0437\u043e\u043f\u0430\u0441\u043d\u043e\u0441\u0442\u0438 \u0431\u0430\u0442\u0430\u0440\u0435\u0438 \u0438 \u043f\u043e\u043b\u043d\u043e\u043c\u0443 \u043d\u0430\u0431\u043e\u0440\u0443 \u0438\u043d\u0442\u0435\u043b\u043b\u0435\u043a\u0442\u0443\u0430\u043b\u044c\u043d\u044b\u0445 \u0444\u0443\u043d\u043a\u0446\u0438\u0439, \u043f\u043e\u043b\u0443\u0447\u0438\u043b \u043f\u0435\u0440\u0432\u043e\u0435 \u043c\u0435\u0441\u0442\u043e \u0432 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438 \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0430 \u044d\u043a\u0441\u043f\u043b\u0443\u0430\u0442\u0430\u0446\u0438\u0438 \u0441\u0440\u0435\u0434\u043d\u0435\u0446\u0435\u043d\u043e\u0432\u044b\u0445 \u044d\u043b\u0435\u043a\u0442\u0440\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439, \u0434\u0435\u043c\u043e\u043d\u0441\u0442\u0440\u0438\u0440\u0443\u044f \u0432\u044b\u0441\u043e\u043a\u043e\u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0435 \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0438 \u00ab\u043e\u0434\u043d\u043e\u0440\u043e\u0434\u043d\u043e\u0441\u0442\u0438\u00bb \u0431\u0435\u043d\u0437\u0438\u043d\u043e\u0432\u044b\u0445 \u0438 \u044d\u043b\u0435\u043a\u0442\u0440\u0438\u0447\u0435\u0441\u043a\u0438\u0445 \u0441\u0438\u043b."'
+         data-zh='"2025\u5e749\u670825\u65e5\uff0c\u4e2d\u56fd\u6c7d\u8f66\u4ea7\u54c1\u8d28\u91cf\u8868\u73b0\u7814\u7a76\uff08AQR\uff09\u5728\u5317\u4eac\u516c\u5e03\u7ed3\u679c\uff0c\u4e0a\u6c7d\u5927\u4f17\u5e15\u8428\u7279Pro\u51ed\u501f380TSI\u53d1\u52a8\u673a\u3001\u5168\u7cfb10\u5b89\u5168\u6c14\u56ca\u7b49\u914d\u7f6e\u8363\u83b7\u5408\u8d44\u8f7f\u8f66\u8d28\u91cf\u4f53\u9a8c\u7b2c\u4e00\uff1bID.3\u51ed\u5176\u7535\u6c60\u5b89\u5168\u7684338\u9879\u9a8c\u8bc1\u548c\u5168\u65b9\u4f4d\u667a\u80fd\u914d\u7f6e\uff0c\u83b7\u4e2d\u7aef\u7eaf\u7535\u52a8\u8f66\u8d28\u91cf\u4f53\u9a8c\u7b2c\u4e00\uff0c\u5f70\u663e\u5176\u2018\u6cb9\u7535\u540c\u8d28\u2019\u7684\u9ad8\u54c1\u8d28\u5b9e\u529b\u3002"'
+         data-en='"On September 25, 2025, the China Automobile Product Quality Performance Research (AQR) released its results in Beijing. The SAIC Volkswagen Passat\u202fPro, thanks to its 380\u202fTSI engine and a suite that includes ten airbags across the entire range, won first place in quality experience among joint\u2011venture sedans; the ID. 3, with its 338 battery\u2011safety validations and comprehensive intelligent features, secured first place in quality experience among mid\u2011range pure\u2011electric vehicles, highlighting its high\u2011quality performance of oil\u2011electric parity."'>
+        25 сентября 2025 года в Пекине были опубликованы результаты исследования качества автомобильной продукции Китая (AQR). SAIC Volkswagen Passat Pro, благодаря двигателю 380 TSI и полному набору из 10 подушек безопасности во всех комплектациях, занял первое место в категории качества эксплуатации седанов совместных предприятий; ID. 3, благодаря 338 проверкам безопасности батареи и полному набору интеллектуальных функций, получил первое место в категории качества эксплуатации среднеценовых электромобилей, демонстрируя высококачественные возможности «однородности» бензиновых и электрических сил.
+        <a href="https://auto.cri.cn/20250928/d9294ad3-3344-dac3-ac54-39a8b1ca2426.html" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u041c\u0435\u0436\u0434\u0443\u043d\u0430\u0440\u043e\u0434\u043d\u044b\u0439 \u0430\u0432\u0442\u043e\u0441\u0430\u043b\u043e\u043d \u0432 \u0422\u044f\u043d\u044c\u0446\u0437\u0438\u043d\u0435 \u043e\u0442\u043a\u0440\u043e\u0435\u0442\u0441\u044f 30\u202f\u0441\u0435\u043d\u0442\u044f\u0431\u0440\u044f\u202f2025\u202f\u0433\u043e\u0434\u0430."'
+        data-zh='"\u5929\u6d25\u56fd\u9645\u8f66\u5c55\u5c06\u4e8e2025\u5e749\u670830\u65e5\u5f00\u5e55\u3002"'
+        data-en='"The Tianjin International Auto Show will open on September 30, 2025."'>Международный автосалон в Тяньцзине откроется 30 сентября 2025 года.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-28</span>
+    </div>
+
+    
+
+    <div class="news-content"
+         data-ru='"\u042d\u0442\u0430 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u044c\u043d\u0430\u044f \u0432\u044b\u0441\u0442\u0430\u0432\u043a\u0430 \u043f\u0440\u043e\u0439\u0434\u0435\u0442 \u0441 30 \u0441\u0435\u043d\u0442\u044f\u0431\u0440\u044f \u043f\u043e 6 \u043e\u043a\u0442\u044f\u0431\u0440\u044f 2025\u202f\u0433\u043e\u0434\u0430 \u0432 \u041d\u0430\u0446\u0438\u043e\u043d\u0430\u043b\u044c\u043d\u043e\u043c \u0432\u044b\u0441\u0442\u0430\u0432\u043e\u0447\u043d\u043e\u043c \u0446\u0435\u043d\u0442\u0440\u0435 \u0422\u044f\u043d\u044c\u0446\u0437\u0438\u043d\u044f, \u043f\u043b\u043e\u0449\u0430\u0434\u044c \u0432\u044b\u0441\u0442\u0430\u0432\u043e\u0447\u043d\u043e\u0439 \u0437\u043e\u043d\u044b \u0441\u043e\u0441\u0442\u0430\u0432\u0438\u0442 200\u202f000\u202f\u043c\u00b2, \u0431\u0443\u0434\u0435\u0442 \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u043e 920 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439, \u0438\u0437 \u043d\u0438\u0445 480\u202f\u2014 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0438 \u043d\u0430 \u043d\u043e\u0432\u043e\u0439 \u044d\u043d\u0435\u0440\u0433\u0438\u0438. \u041d\u0430 \u043c\u0435\u0440\u043e\u043f\u0440\u0438\u044f\u0442\u0438\u0438 \u0441\u043e\u0431\u0435\u0440\u0443\u0442\u0441\u044f \u0432\u0435\u0434\u0443\u0449\u0438\u0435 \u043c\u0438\u0440\u043e\u0432\u044b\u0435 \u0431\u0440\u0435\u043d\u0434\u044b \u0438 \u0431\u0443\u0434\u0435\u0442 \u043f\u0440\u043e\u0432\u0435\u0434\u0435\u043d\u043e 300 \u0440\u0435\u043a\u043b\u0430\u043c\u043d\u044b\u0445 \u0430\u043a\u0446\u0438\u0439, \u0440\u0430\u0437\u0434\u0430\u0441\u0442\u0441\u044f \u043a\u0443\u043f\u043e\u043d\u044b \u043d\u0430 \u043f\u043e\u043a\u0443\u043f\u043a\u0443 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u044f \u043d\u0430 \u0441\u0443\u043c\u043c\u0443 5\u202f\u043c\u043b\u043d \u044e\u0430\u043d\u0435\u0439, \u043c\u0430\u043a\u0441\u0438\u043c\u0430\u043b\u044c\u043d\u0430\u044f \u0441\u0443\u0431\u0441\u0438\u0434\u0438\u044f \u0441\u043e\u0441\u0442\u0430\u0432\u0438\u0442 4500 \u044e\u0430\u043d\u0435\u0439, \u0446\u0435\u043b\u044c\u202f\u2014 \u043f\u043e\u0432\u044b\u0441\u0438\u0442\u044c \u0443\u0432\u0435\u0440\u0435\u043d\u043d\u043e\u0441\u0442\u044c \u043f\u043e\u0442\u0440\u0435\u0431\u0438\u0442\u0435\u043b\u0435\u0439 \u0432 \u0430\u0432\u0442\u043e\u043f\u043e\u043a\u0443\u043f\u043a\u0430\u0445 \u0432 \u0440\u0435\u0433\u0438\u043e\u043d\u0435 \u041f\u0435\u043a\u0438\u043d\u2011\u0422\u044f\u043d\u044c\u0446\u0437\u0438\u043d\u044c\u2011\u0425\u044d\u0431\u044d\u0439."'
+         data-zh='"\u672c\u5c4a\u8f66\u5c55\u5c06\u4e8e2025\u5e749\u670830\u65e5\u81f310\u67086\u65e5\u5728\u5929\u6d25\u56fd\u5bb6\u4f1a\u5c55\u4e2d\u5fc3\u4e3e\u884c\uff0c\u5c55\u533a\u9762\u79ef20\u4e07\u5e73\u65b9\u7c73\uff0c\u5c55\u793a920\u53f0\u8f66\u8f86\uff0c\u5176\u4e2d\u65b0\u80fd\u6e90480\u53f0\uff0c\u805a\u96c6\u5168\u7403\u4e3b\u6d41\u54c1\u724c\u5e76\u63a8\u51fa300\u573a\u4fc3\u9500\u6d3b\u52a8\uff0c\u53d1\u653e500\u4e07\u5143\u8d2d\u8f66\u5238\uff0c\u6700\u9ad8\u8865\u8d344500\u5143\uff0c\u65e8\u5728\u63d0\u632f\u4eac\u6d25\u5180\u6c7d\u8f66\u6d88\u8d39\u4fe1\u5fc3\u3002"'
+         data-en='"This year\u0027s auto show will be held from September 30 to October 6, 2025 at the Tianjin National Convention and Exhibition Center, covering an exhibition area of 200,000 square meters, showcasing 920 vehicles, including 480 new energy vehicles, gathering global mainstream brands and launching 300 promotional events, issuing purchase vouchers worth 5 million yuan, with a maximum subsidy of 4,500 yuan, aiming to boost automobile consumption confidence in the Beijing\u2011Tianjin\u2011Hebei region."'>
+        Эта автомобильная выставка пройдет с 30 сентября по 6 октября 2025 года в Национальном выставочном центре Тяньцзиня, площадь выставочной зоны составит 200 000 м², будет представлено 920 автомобилей, из них 480 — автомобили на новой энергии. На мероприятии соберутся ведущие мировые бренды и будет проведено 300 рекламных акций, раздастся купоны на покупку автомобиля на сумму 5 млн юаней, максимальная субсидия составит 4500 юаней, цель — повысить уверенность потребителей в автопокупках в регионе Пекин‑Тяньцзинь‑Хэбэй.
+        <a href="https://www.xinhuanet.com/auto/20250928/61abefc87fa24ef3a4ecd9882ca39c84/c.html" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u0412\u0442\u043e\u0440\u0430\u044f \u043c\u043e\u0434\u0435\u043b\u044c Dreame \u043e\u0440\u0438\u0435\u043d\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u0430 \u043d\u0430 Rolls\u2011Royce; Xiaomi Auto \u0437\u0430\u043f\u0443\u0441\u043a\u0430\u0435\u0442 \u0443\u0441\u043b\u0443\u0433\u0438 \u043f\u0440\u0435\u043c\u0438\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u0438\u043d\u0434\u0438\u0432\u0438\u0434\u0443\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u0437\u0430\u043a\u0430\u0437\u0430."'
+        data-zh='"\u8ffd\u89c5\u7b2c\u4e8c\u6b3e\u8f66\u578b\u5bf9\u6807\u52b3\u65af\u83b1\u65af\uff1b\u5c0f\u7c73\u6c7d\u8f66\u5f00\u542f\u9ad8\u7aef\u5b9a\u5236\u670d\u52a1\u3002"'
+        data-en='"Dreame\u0027s second vehicle model is positioned against Rolls\u2011Royce; Xiaomi Automobile launches a high\u2011end customization service."'>Вторая модель Dreame ориентирована на Rolls‑Royce; Xiaomi Auto запускает услуги премиального индивидуального заказа.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-28</span>
+    </div>
+
+    
+    <div class="image-gallery-container">
+        <div class="image-gallery" id="gallery-13">
+            
+            <div class="image-container">
+                <img src="https://imagecn.gasgoo.com/moblogo/News/UEditor/image/20250928/6389466303468708296387982.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+        </div>
+        <div class="gallery-nav prev" onclick="scrollGallery('gallery-13', -1)"><i class="fas fa-chevron-left"></i></div>
+        <div class="gallery-nav next" onclick="scrollGallery('gallery-13', 1)"><i class="fas fa-chevron-right"></i></div>
+        <div class="gallery-indicators" id="indicators-13"></div>
+    </div>
+    
+
+    <div class="news-content"
+         data-ru='"Dreame \u043d\u0430 \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e\u0439 \u043a\u043e\u043d\u0444\u0435\u0440\u0435\u043d\u0446\u0438\u0438 \u043f\u0430\u0440\u0442\u043d\u0451\u0440\u043e\u0432 \u043f\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u0438\u043b\u0430 \u0441\u0432\u0435\u0440\u0445\u0440\u043e\u0441\u043a\u043e\u0448\u043d\u044b\u0439 \u0432\u043d\u0435\u0434\u043e\u0440\u043e\u0436\u043d\u0438\u043a, \u0441\u043e\u043f\u043e\u0441\u0442\u0430\u0432\u0438\u043c\u044b\u0439 \u0441 Rolls\u2011Royce Cullinan, \u043f\u043b\u0430\u043d\u0438\u0440\u0443\u0435\u0442 \u0432\u044b\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u0432 \u003cb\u003e2027 \u0433\u043e\u0434\u0443\u003c/b\u003e \u0438 \u043e\u0441\u043d\u0430\u0441\u0442\u0438\u0442\u044c \u0441\u043e\u0442\u043d\u0435\u0439 \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u044b\u0445 \u043d\u043e\u0432\u0430\u0442\u043e\u0440\u0441\u043a\u0438\u0445 \u0442\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0438\u0439; \u0421\u044f\u043e\u043c\u0438 \u0410\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0438 \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u043b\u0430 \u0435\u0436\u0435\u043c\u0435\u0441\u044f\u0447\u043d\u044b\u0439 \u043b\u0438\u043c\u0438\u0442 \u0432 \u003cb\u003e40 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439\u003c/b\u003e, \u0441 \u043e\u043f\u0446\u0438\u0435\u0439 \u043f\u0440\u0435\u043c\u0438\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u043a\u0430\u0441\u0442\u043e\u043c\u0430\u0439\u0437\u0430 \u0441\u0442\u043e\u0438\u043c\u043e\u0441\u0442\u044c\u044e \u0431\u043e\u043b\u0435\u0435 \u003cb\u003e100\u202f000 \u044e\u0430\u043d\u0435\u0439\u003c/b\u003e; \u041b\u0438\u043f\u043c\u043e\u0442\u043e\u0440 \u0434\u043e\u0441\u0442\u0438\u0433\u043b\u0430 \u0432\u044b\u043f\u0443\u0441\u043a\u0430 \u003cb\u003e1\u202f000\u202f000 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439\u003c/b\u003e, \u0432 \u043f\u0435\u0440\u0432\u043e\u0439 \u043f\u043e\u043b\u043e\u0432\u0438\u043d\u0435 \u0433\u043e\u0434\u0430 \u043f\u043e\u0441\u0442\u0430\u0432\u0438\u043b\u0430 \u003cb\u003e221\u202f664 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u044f\u003c/b\u003e, \u0447\u0442\u043e \u043d\u0430 \u003cb\u003e155,7\u202f%\u003c/b\u003e \u0431\u043e\u043b\u044c\u0448\u0435 \u043f\u043e \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u044e \u0441 \u043f\u0440\u043e\u0448\u043b\u044b\u043c \u0433\u043e\u0434\u043e\u043c, \u0430 \u0433\u043e\u0434\u043e\u0432\u0443\u044e \u0446\u0435\u043b\u044c \u043f\u043e \u043f\u0440\u043e\u0434\u0430\u0436\u0430\u043c \u043f\u043e\u0432\u044b\u0441\u0438\u043b\u0430 \u0434\u043e \u003cb\u003e\u043e\u0442 580\u202f000 \u0434\u043e 650\u202f000 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439\u003c/b\u003e."'
+         data-zh='"\u8ffd\u89c5\u5728\u5168\u7403\u5408\u4f5c\u4f19\u4f34\u5927\u4f1a\u5c55\u793a\u5bf9\u6807\u52b3\u65af\u83b1\u65af\u5e93\u91cc\u5357\u7684\u8d85\u5962SUV\uff0c\u8ba1\u5212\u003cb\u003e2027\u5e74\u003c/b\u003e\u4e0a\u5e02\u5e76\u914d\u767e\u5927\u5168\u7403\u9996\u521b\u6280\u672f\uff1b\u5c0f\u7c73\u6c7d\u8f66\u63a8\u51fa\u6bcf\u6708\u9650\u91cf\u003cb\u003e40\u53f0\u003c/b\u003e\u3001\u9009\u914d\u8d85\u003cb\u003e10\u4e07\u5143\u003c/b\u003e\u7684\u9ad8\u7aef\u5b9a\u5236\uff1b\u96f6\u8dd1\u5b9e\u73b0\u7b2c\u003cb\u003e100\u4e07\u53f0\u003c/b\u003e\u4e0b\u7ebf\uff0c\u4e0a\u534a\u5e74\u4ea4\u4ed8\u003cb\u003e221\uff0c664\u8f86\u003c/b\u003e\uff0c\u540c\u6bd4\u589e\u957f\u003cb\u003e155.7%\u003c/b\u003e\uff0c\u5168\u5e74\u9500\u91cf\u76ee\u6807\u4e0a\u8c03\u81f3\u003cb\u003e58\u201165\u4e07\u8f86\u003c/b\u003e\u3002"'
+         data-en='"Dreame showcased an ultra\u2011luxury SUV benchmarked against the Rolls\u2011Royce Cullinan at the Global Partner Conference, planning to launch in \u003cb\u003e2027\u003c/b\u003e equipped with a hundred globally pioneering technologies; Xiaomi Automobile introduced a monthly limited run of \u003cb\u003e40\u003c/b\u003e units, with optional high\u2011end customization exceeding \u003cb\u003e100,000 yuan\u003c/b\u003e; Leapmotor rolled out its \u003cb\u003e1,000,000th\u003c/b\u003e vehicle, delivered \u003cb\u003e221,664\u003c/b\u003e units in the first half of the year, a year\u2011on\u2011year increase of \u003cb\u003e155.7%\u003c/b\u003e, and raised its full\u2011year sales target to \u003cb\u003e580,000\u2011650,000\u003c/b\u003e units."'>
+        Dreame на глобальной конференции партнёров представила сверхроскошный внедорожник, сопоставимый с Rolls‑Royce Cullinan, планирует выпустить в <b>2027 году</b> и оснастить сотней глобальных новаторских технологий; Сяоми Автомобили запустила ежемесячный лимит в <b>40 автомобилей</b>, с опцией премиального кастомайза стоимостью более <b>100 000 юаней</b>; Липмотор достигла выпуска <b>1 000 000 автомобилей</b>, в первой половине года поставила <b>221 664 автомобиля</b>, что на <b>155,7 %</b> больше по сравнению с прошлым годом, а годовую цель по продажам повысила до <b>от 580 000 до 650 000 автомобилей</b>.
+        <a href="https://auto.gasgoo.com/news/202509/28I70434454C501.shtml" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+<article class="news-item">
+    <h2 class="news-title"
+        data-ru='"\u0427\u0435\u0440\u0435\u0437 \u043f\u044f\u0442\u044c \u043c\u0435\u0441\u044f\u0446\u0435\u0432 \u043f\u043e\u0441\u043b\u0435 \u0432\u044b\u0445\u043e\u0434\u0430 \u043d\u0430 \u0440\u044b\u043d\u043e\u043a \u0441\u0443\u0431\u0431\u0440\u0435\u043d\u0434 \u041d\u0438\u043e Firefly \u043f\u043e\u0441\u0442\u0430\u0432\u0438\u043b 20\u202f000 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0435\u0439."'
+        data-zh='"\u4e0a\u5e02\u4e94\u4e2a\u6708\uff0c\u851a\u6765\u5b50\u54c1\u724c\u8424\u706b\u866b\u4ea4\u4ed820000\u53f0\u3002"'
+        data-en='"Five months after launch, NIO\u0027s sub-brand Firefly has delivered 20,000 units."'>Через пять месяцев после выхода на рынок суббренд Нио Firefly поставил 20 000 автомобилей.</h2>
+    <div class="meta-info">
+        <span class="date"><i class="fas fa-calendar-alt"></i> 2025-09-28</span>
+    </div>
+
+    
+    <div class="image-gallery-container">
+        <div class="image-gallery" id="gallery-14">
+            
+            <div class="image-container">
+                <img src="https://imagecn.gasgoo.com/moblogo/News/UEditor/image/20250928/6389467067423504258077713.png" alt="新闻配图" loading="lazy">
+            </div>
+            
+        </div>
+        <div class="gallery-nav prev" onclick="scrollGallery('gallery-14', -1)"><i class="fas fa-chevron-left"></i></div>
+        <div class="gallery-nav next" onclick="scrollGallery('gallery-14', 1)"><i class="fas fa-chevron-right"></i></div>
+        <div class="gallery-indicators" id="indicators-14"></div>
+    </div>
+    
+
+    <div class="news-content"
+         data-ru='"\u0422\u0440\u0435\u0442\u0438\u0439 \u0431\u0440\u0435\u043d\u0434, Firefly Fireflies, \u0431\u044b\u043b \u0432\u043a\u043b\u044e\u0447\u0435\u043d \u0432 \u0441\u043f\u0438\u0441\u043e\u043a \u0432 \u0430\u043f\u0440\u0435\u043b\u0435 2025 \u0433\u043e\u0434\u0430 \u0438 \u0434\u043e\u0441\u0442\u0430\u0432\u043b\u0435\u043d \u0432 \u043e\u0431\u0449\u0435\u0439 \u0441\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u0438 28 \u0441\u0435\u043d\u0442\u044f\u0431\u0440\u044f 2025 \u0433\u043e\u0434\u0430 \u043f\u043e \u0430\u0434\u0440\u0435\u0441\u0443 \u003cb\u003e20000/b\u003c/b\u003e. \u041c\u043e\u0434\u0435\u043b\u044c, \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u0430\u044f \u043d\u0430 \u043c\u0435\u0441\u0442\u0435 \u0438 \u0441\u0432\u0435\u0442\u044f\u0449\u0430\u044f\u0441\u044f, \u0431\u044b\u043b\u0430 \u0443\u043c\u0435\u043d\u044c\u0448\u0435\u043d\u0430 \u0441 \u003cb\u003e $798 \u043c\u043b\u043d \u003c/b\u003e \u0438 \u003cb\u003e $858 \u043c\u043b\u043d \u003c/b\u003e \u0438\u0437 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u044b BaaS \u0434\u043e \u003cb\u003e \u003c/b\u003e \u0438 \u0441\u0442\u0430\u0432\u043a\u0438 \u0430\u0440\u0435\u043d\u0434\u044b \u0431\u0430\u0442\u0430\u0440\u0435\u0438 \u003cb\u003e $399 \u003c/b\u003e/\u043c\u0435\u0441\u044f\u0446 \u0441 42,1. KWh \u0430\u043a\u043a\u0443\u043c\u0443\u043b\u044f\u0442\u043e\u0440, CLTC \u043f\u0440\u043e\u0434\u043e\u043b\u0436\u0430\u0435\u0442 \u043b\u0435\u0442\u0430\u0442\u044c \u003cb\u003e 420 \u043a\u043c \u003c/b\u003e \u0438 100 \u043a\u043c \u043f\u043e\u0442\u0440\u0435\u0431\u043b\u0435\u043d\u0438\u044f \u044d\u043b\u0435\u043a\u0442\u0440\u043e\u044d\u043d\u0435\u0440\u0433\u0438\u0438 \u003cb\u003e10,9 \u043a\u0412\u0442\u0447 \u003c/b\u003e."'
+         data-zh='"\u851a\u6765\u6c7d\u8f66\u65d7\u4e0b\u7b2c\u4e09\u54c1\u724cfirefly\u8424\u706b\u866b\u81ea2025\u5e744\u6708\u4e0a\u5e02\u540e\uff0c\u4e8e2025\u5e749\u670828\u65e5\u5b9e\u73b0\u7d2f\u8ba1\u4ea4\u4ed8\u003cb\u003e20000\u003c/b\u003e\u53f0\u3002\u8be5\u8f66\u578b\u63d0\u4f9b\u81ea\u5728\u7248\u548c\u53d1\u5149\u7248\uff0c\u8d77\u552e\u4ef7\u7ecfBaaS\u65b9\u6848\u964d\u81f3\u003cb\u003e7.98\u4e07\u5143\u003c/b\u003e\u548c\u003cb\u003e8.58\u4e07\u5143\u003c/b\u003e\uff0c\u7535\u6c60\u79df\u91d1\u003cb\u003e399\u5143\u003c/b\u003e/\u6708\uff0c\u914d\u590742.1kWh\u7535\u6c60\uff0cCLTC\u7eed\u822a\u003cb\u003e420km\u003c/b\u003e\uff0c\u767e\u516c\u91cc\u7535\u8017\u003cb\u003e10.9kWh\u003c/b\u003e\u3002"'
+         data-en='"NIO\u0027s third brand firefly has delivered a cumulative total of \u003cb\u003e20,000\u003c/b\u003e units since its launch in April 2025, reaching this milestone on September 28, 2025. The model is offered in the Free and Glow editions, with starting prices reduced through a BaaS scheme to \u003cb\u003eCNY 79,800\u003c/b\u003e and \u003cb\u003eCNY 85,800\u003c/b\u003e, respectively, and a battery rental fee of \u003cb\u003eCNY 399\u003c/b\u003e/month. It is equipped with a 42.1\u202fkWh battery, delivering a CLTC range of \u003cb\u003e420\u202fkm\u003c/b\u003e and a consumption of \u003cb\u003e10.9\u202fkWh\u003c/b\u003e per 100\u202fkm."'>
+        Третий бренд, Firefly Fireflies, был включен в список в апреле 2025 года и доставлен в общей сложности 28 сентября 2025 года по адресу <b>20000/b</b>. Модель, доступная на месте и светящаяся, была уменьшена с <b> $798 млн </b> и <b> $858 млн </b> из программы BaaS до <b> </b> и ставки аренды батареи <b> $399 </b>/месяц с 42,1. KWh аккумулятор, CLTC продолжает летать <b> 420 км </b> и 100 км потребления электроэнергии <b>10,9 кВтч </b>.
+        <a href="https://auto.gasgoo.com/news/202509/28I70434467C501.shtml" class="source-link" style="display: inline-block; margin-top: 15px;"><i class="fas fa-arrow-up-right-from-square"></i></a>
+    </div>
+</article>
+
+
+<footer>
+    <p id="copyrightText">Авторское право © Atom 2025. Все права защищены</p>
+    <p id="updateText">Последнее обновление: 2025-09-29 07:22:32</p>
+</footer>
+
+<button id="back-to-top" title="返回顶部"><i class="fas fa-arrow-up"></i></button>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 初始化所有功能
+        initializeGalleries();
+        initializeLanguage();
+        initializeTheme();
+        // 初始化功能更强的全屏查看器
+        initializeFullscreenViewer();
+        initializeScrollFeatures();
+    });
+
+    // --- 主题初始化 ---
+    function initializeTheme() {
+        const themeSelect = document.getElementById('themeSelect');
+        const savedTheme = localStorage.getItem('selectedTheme') || 'light';
+        applyTheme(savedTheme);
+        themeSelect.value = savedTheme;
+        themeSelect.addEventListener('change', function() {
+            const newTheme = this.value;
+            applyTheme(newTheme);
+            localStorage.setItem('selectedTheme', newTheme);
+        });
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+
+        const logoImage = document.getElementById('logoImage');
+        if (logoImage) {
+            const baseUrl = 'https://tg-connors-projects-87a4e157.vercel.app';
+
+            if (theme === 'dark') {
+                logoImage.src = baseUrl + '/logo_dark.png';
+            } else {
+                logoImage.src = baseUrl + '/logo_white.png';
+            }
+        }
+    }
+
+    // --- 语言初始化 ---
+    function initializeLanguage() {
+        const languageSelect = document.getElementById('languageSelect');
+        const savedLang = localStorage.getItem('selectedLanguage') || 'ru';
+        languageSelect.value = savedLang;
+        applyLanguage(savedLang);
+        languageSelect.addEventListener('change', function() {
+            const lang = this.value;
+            localStorage.setItem('selectedLanguage', lang);
+            applyLanguage(lang);
+        });
+    }
+
+    // --- 滚动特性初始化 ---
+    function initializeScrollFeatures() {
+        const topControls = document.getElementById('top-controls');
+        const mainHeader = document.getElementById('main-header');
+        const backToTopButton = document.getElementById('back-to-top');
+        const scrollThreshold = mainHeader.offsetTop + mainHeader.offsetHeight;
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > scrollThreshold) {
+                topControls.classList.add('sticky');
+            } else {
+                topControls.classList.remove('sticky');
+            }
+            if (window.scrollY > 300) {
+                backToTopButton.classList.add('show');
+            } else {
+                backToTopButton.classList.remove('show');
+            }
+        }, { passive: true });
+
+        backToTopButton.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    // --- 画廊初始化 ---
+    function initializeGalleries() {
+        document.querySelectorAll('.image-gallery').forEach(gallery => {
+            const galleryId = gallery.id;
+            const indicatorsContainer = document.getElementById(`indicators-${galleryId.split('-')[1]}`);
+            const imageContainers = gallery.querySelectorAll('.image-container');
+            const imageCount = imageContainers.length;
+
+            if (imageCount === 0 || !indicatorsContainer) return;
+
+            const navContainer = gallery.closest('.image-gallery-container');
+            // 如果图片少于等于1张，隐藏导航和指示器
+            if (imageCount <= 1) {
+                if(navContainer.querySelector('.gallery-nav.prev')) navContainer.querySelector('.gallery-nav.prev').style.display = 'none';
+                if(navContainer.querySelector('.gallery-nav.next')) navContainer.querySelector('.gallery-nav.next').style.display = 'none';
+                indicatorsContainer.style.display = 'none';
+                return;
+            }
+
+            indicatorsContainer.innerHTML = '';
+            for (let i = 0; i < imageCount; i++) {
+                const indicator = document.createElement('div');
+                indicator.classList.add('indicator');
+                if (i === 0) indicator.classList.add('active');
+                indicator.onclick = () => showImage(galleryId, i);
+                indicatorsContainer.appendChild(indicator);
+            }
+
+            resetAutoScroll(gallery);
+
+            let scrollTimer;
+            gallery.addEventListener('scroll', () => {
+                 clearTimeout(scrollTimer);
+                 scrollTimer = setTimeout(() => {
+                      updateIndicators(galleryId);
+                 }, 150);
+            }, { passive: true });
+        });
+    }
+
+    // --- 全屏图片查看器 ---
+    function initializeFullscreenViewer() {
+        let currentImages = [], currentIndex = 0, viewerElement = null, touchStartX = 0, touchEndX = 0;
+
+        document.querySelectorAll('.image-container').forEach(container => {
+            container.addEventListener('click', () => {
+                const gallery = container.closest('.image-gallery');
+                if (!gallery) return;
+
+                // 获取图集内所有图片的URL
+                currentImages = Array.from(gallery.querySelectorAll('img')).map(img => img.src);
+                // 确定被点击图片在图集中的索引
+                currentIndex = Array.from(gallery.children).indexOf(container);
+
+                // 创建并显示查看器
+                createViewer();
+            });
+        });
+
+        // 创建查看器DOM结构
+        function createViewer() {
+            if (document.querySelector('.fullscreen-viewer')) { document.querySelector('.fullscreen-viewer').remove(); }
+            viewerElement = document.createElement('div');
+            viewerElement.className = 'fullscreen-viewer';
+            viewerElement.innerHTML = `<div class="fullscreen-close" title="关闭">&times;</div><div class="fullscreen-nav prev" title="上一张">&#10094;</div><img src="" alt="全屏图片"><div class="fullscreen-nav next" title="下一张">&#10095;</div>`;
+            document.body.appendChild(viewerElement);
+            document.body.style.overflow = 'hidden';
+
+            viewerElement.querySelector('.fullscreen-close').addEventListener('click', closeViewer);
+            viewerElement.querySelector('.fullscreen-nav.prev').addEventListener('click', () => changeImage(-1));
+            viewerElement.querySelector('.fullscreen-nav.next').addEventListener('click', () => changeImage(1));
+            viewerElement.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+            viewerElement.addEventListener('touchend', (e) => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); });
+            document.addEventListener('keydown', handleKeydown);
+            showImageInViewer();
+            setTimeout(() => viewerElement.classList.add('show'), 10);
+        }
+
+        function showImageInViewer() {
+            if (!viewerElement) return;
+            const img = viewerElement.querySelector('img');
+            const prevNav = viewerElement.querySelector('.fullscreen-nav.prev');
+            const nextNav = viewerElement.querySelector('.fullscreen-nav.next');
+            img.src = currentImages[currentIndex];
+            const display = currentImages.length <= 1 ? 'none' : 'flex';
+            prevNav.style.display = nextNav.style.display = display;
+        }
+
+        function changeImage(direction) {
+            const img = viewerElement.querySelector('img');
+            img.classList.add('fade-out');
+            setTimeout(() => {
+                currentIndex = (currentIndex + direction + currentImages.length) % currentImages.length;
+                showImageInViewer();
+                img.classList.remove('fade-out');
+            }, 300);
+        }
+
+        function handleSwipe() {
+            if (Math.abs(touchEndX - touchStartX) < 50) return;
+            changeImage(touchEndX < touchStartX ? 1 : -1);
+        }
+
+        function handleKeydown(e) {
+            if (!viewerElement) return;
+            if (e.key === 'ArrowLeft') changeImage(-1);
+            else if (e.key === 'ArrowRight') changeImage(1);
+            else if (e.key === 'Escape') closeViewer();
+        }
+
+        function closeViewer() {
+            if (viewerElement) {
+                viewerElement.classList.remove('show');
+                document.removeEventListener('keydown', handleKeydown);
+                document.body.style.overflow = '';
+                setTimeout(() => { viewerElement.remove(); viewerElement = null; }, 300);
+            }
+        }
+    }
+
+    // --- 画廊功能函数 ---
+    function getCurrentImageIndex(galleryId) {
+        const gallery = document.getElementById(galleryId);
+        if (!gallery || gallery.children.length === 0) return 0;
+        const itemWidth = gallery.children[0].getBoundingClientRect().width;
+        const gap = parseInt(getComputedStyle(gallery).gap) || 0;
+        return Math.round(gallery.scrollLeft / (itemWidth + gap));
+    }
+
+    function showImage(galleryId, index) {
+        const gallery = document.getElementById(galleryId);
+        const image = gallery.children[index];
+        if (image) {
+            gallery.scrollTo({ left: image.offsetLeft, behavior: 'smooth' });
+            resetAutoScroll(gallery);
+        }
+    }
+
+    function scrollGallery(galleryId, direction) {
+        const gallery = document.getElementById(galleryId);
+        const newIndex = (getCurrentImageIndex(galleryId) + direction + gallery.children.length) % gallery.children.length;
+        showImage(galleryId, newIndex);
+    }
+
+    function resetAutoScroll(gallery) {
+        clearInterval(gallery.dataset.autoScroll);
+        gallery.dataset.autoScroll = setInterval(() => scrollGallery(gallery.id, 1), 5000);
+    }
+
+    function updateIndicators(galleryId) {
+        const indicatorsContainer = document.getElementById(`indicators-${galleryId.split('-')[1]}`);
+        if (!indicatorsContainer) return;
+        const activeIndex = getCurrentImageIndex(galleryId);
+        indicatorsContainer.querySelectorAll('.indicator').forEach((dot, index) => {
+            dot.classList.toggle('active', index === activeIndex);
+        });
+    }
+
+    // --- 语言应用核心函数 (已重写和修复) ---
+    function applyLanguage(lang) {
+        const langMap = {'ru': 'ru-RU', 'zh': 'zh-CN', 'en': 'en-US'};
+        document.documentElement.lang = langMap[lang] || 'ru-RU';
+
+        // 翻译带有 data-* 属性的元素
+        document.querySelectorAll('[data-ru]').forEach(element => {
+            if (element.dataset[lang] === undefined) return;
+            const rawData = element.dataset[lang];
+
+            // 为使用了 tojson 过滤器的元素进行JSON解析
+            if (element.classList.contains('highlight-item') || element.classList.contains('news-title') || element.classList.contains('news-content')) {
+                let content;
+                try {
+                    content = JSON.parse(rawData);
+                } catch (e) {
+                    console.error("无法解析JSON数据:", rawData, "在元素:", element);
+                    content = rawData; // 解析失败则使用原始数据
+                }
+
+                if (element.classList.contains('highlight-item')) {
+                    const span = element.querySelector('span');
+                    if (span) {
+                        const link = span.querySelector('a.source-link');
+                        const linkHref = link ? link.href : '#';
+                        span.innerHTML = `${content} <a href="${linkHref}" class="source-link"><i class="fas fa-arrow-up-right-from-square"></i></a>`;
+                    }
+                } else if (element.classList.contains('news-content')) {
+                    const link = element.querySelector('a.source-link');
+                    element.innerHTML = content;
+                    if (link) element.appendChild(link); // 移动而不是克隆
+                } else if (element.classList.contains('news-title')) {
+                    element.innerHTML = content;
+                }
+            } else {
+                // 对于其他简单元素（如统计数字、下拉选项），直接设置文本内容
+                element.textContent = rawData;
+            }
+        });
+
+        // 翻译固定的静态文本
+        const translations = {
+            ru: { highlights: "Основные моменты", copyright: "Авторское право © Atom 2025. Все права защищены", updated: "Последнее обновление: " },
+            zh: { highlights: "重点内容", copyright: "版权所有 © Atom 2025。保留所有权利", updated: "最后更新: " },
+            en: { highlights: "Highlights", copyright: "Copyright © Atom 2025. All Rights Reserved", updated: "Last updated: " }
+        };
+
+        const staticElements = {
+            highlightsText: translations[lang].highlights,
+            copyrightText: translations[lang].copyright
+        };
+
+        for (const id in staticElements) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = staticElements[id];
+        }
+
+        const updateText = document.getElementById('updateText');
+        if (updateText) {
+             // 保持原始的更新时间不变
+            const updateTime = '2025-09-29 07:22:32';
+            updateText.textContent = translations[lang].updated + updateTime;
+        }
+    }
+</script>
+</body>
+</html>
